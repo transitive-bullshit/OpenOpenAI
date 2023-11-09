@@ -1,12 +1,9 @@
 {
   "name": "openopenai",
   "private": true,
-  "description": "Self-hostable version of OpenAI's new stateful Assistant APIs.",
+  "description": "Self-hosted version of OpenAI's new stateful Assistants API.",
   "author": "Travis Fischer <travis@transitivebullsh.it>",
-  "repository": {
-    "type": "git",
-    "url": "transitive-bullshit/OpenOpenAI"
-  },
+  "repository": "transitive-bullshit/OpenOpenAI",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@8.10.2",
@@ -24,6 +21,12 @@
     "test:lint": "eslint .",
     "test:format": "prettier --check \"**/*.{js,ts,tsx}\"",
     "test:typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.2.0",
+    "@hono/zod-openapi": "^0.8.3",
+    "hono": "^3.9.2",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
@@ -52,16 +55,10 @@
     "openai",
     "ai",
     "assistant",
-    "gpts",
-    "agents",
+    "gpt",
+    "agent",
     "agi",
     "llms",
     "chatgpt"
-  ],
-  "dependencies": {
-    "@hono/node-server": "^1.2.0",
-    "@hono/zod-openapi": "^0.8.3",
-    "hono": "^3.9.2",
-    "zod": "^3.22.4"
-  }
+  ]
 }
