@@ -1,0 +1,67 @@
+{
+  "name": "openopenai",
+  "private": true,
+  "description": "Self-hostable version of OpenAI's new stateful Assistant APIs.",
+  "author": "Travis Fischer <travis@transitivebullsh.it>",
+  "repository": {
+    "type": "git",
+    "url": "transitive-bullshit/OpenOpenAI"
+  },
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@8.10.2",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.dist.json",
+    "prebuild": "run-s clean",
+    "clean": "del dist",
+    "dev": "tsc --watch",
+    "prepare": "husky install",
+    "release": "np",
+    "test": "run-p test:*",
+    "test:lint": "eslint .",
+    "test:format": "prettier --check \"**/*.{js,ts,tsx}\"",
+    "test:typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^10.1.0",
+    "@dexaai/eslint-config": "^0.4.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.2.1",
+    "@types/node": "^20.9.0",
+    "del-cli": "^5.1.0",
+    "eslint": "^8.53.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.0.2",
+    "np": "^8.0.4",
+    "npm-run-all": "^4.1.5",
+    "openapi-types": "^12.1.3",
+    "prettier": "^2.8.8",
+    "quicktype-core": "^23.0.77",
+    "tsx": "^3.14.0",
+    "typescript": "^5.2.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --ignore-unknown --write"
+    ]
+  },
+  "keywords": [
+    "openai",
+    "ai",
+    "assistant",
+    "gpts",
+    "agents",
+    "agi",
+    "llms",
+    "chatgpt"
+  ],
+  "dependencies": {
+    "@hono/node-server": "^1.2.0",
+    "@hono/zod-openapi": "^0.8.3",
+    "hono": "^3.9.2",
+    "zod": "^3.22.4"
+  }
+}

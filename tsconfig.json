@@ -1,0 +1,28 @@
+{
+  "include": ["src", "bin"],
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["ESNext", "DOM"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "sourceMap": true,
+    "noEmit": false,
+    "outDir": "dist"
+  }
+}

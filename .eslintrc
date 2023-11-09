@@ -1,0 +1,9 @@
+{
+  "root": true,
+  "extends": ["@dexaai/eslint-config", "@dexaai/eslint-config/node"],
+  "ignorePatterns": ["node_modules", "dist", ".next"],
+  "rules": {
+    "no-console": "off",
+    "import/order": "off"
+  }
+}
