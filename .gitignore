@@ -53,3 +53,5 @@ next-env.d.ts
 .env.production.local
 
 .turbo
+
+dist/
