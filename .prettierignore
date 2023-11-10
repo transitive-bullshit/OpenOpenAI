@@ -1,4 +1,4 @@
 dist/
 .next/
-src/oai.ts
-src/oai-routes.ts
+src/generated/oai.ts
+src/generated/oai-routes.ts

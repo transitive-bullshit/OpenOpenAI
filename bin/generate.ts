@@ -12,8 +12,9 @@ import {
 } from 'quicktype-core'
 
 const srcFile = './openai-openapi/openapi.yaml'
-const destFileSchemas = './src/oai.ts'
-const destfileRoutes = './src/oai-routes.ts'
+const destFolder = './src/generated'
+const destFileSchemas = `${destFolder}/oai.ts`
+const destfileRoutes = `${destFolder}/oai-routes.ts`
 
 const jsonContentType = 'application/json'
 
@@ -293,6 +294,8 @@ async function main() {
     .replaceAll(/z\s*\.union\(\[\s*([^,]*),\s*z\.null\(\)\s*\]\)/gm, '$1')
     // replace single value enums with literals
     .replaceAll(/z\s*\.enum\(\[\s*('[^']*')\s*\]\)/gm, 'z.literal($1)')
+    // temporary bug fix for zod-openapi not recognizing numbers in query params
+    .replaceAll('limit: z.number().optional()', 'limit: z.string().optional()')
 
   const prettySchemasSource = prettify(prettySchemasSource0)
   await fs.writeFile(destFileSchemas, prettySchemasSource)

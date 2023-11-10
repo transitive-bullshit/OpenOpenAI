@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
-import * as routes from './oai-routes'
+import * as routes from './generated/oai-routes'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
