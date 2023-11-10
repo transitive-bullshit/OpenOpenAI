@@ -230,7 +230,7 @@ export const CreateFileRequestSchema = z.object({
   purpose: CreateFileRequestPurposeSchema
 })
 
-export const MessageFilesSchema = z.object({
+export const MessageFileObjectSchema = z.object({
   created_at: z.number(),
   id: z.string(),
   message_id: z.string(),
@@ -238,7 +238,7 @@ export const MessageFilesSchema = z.object({
 })
 
 export const ListMessageFilesResponseClassSchema = z.object({
-  data: z.array(MessageFilesSchema),
+  data: z.array(MessageFileObjectSchema),
   first_id: z.string(),
   has_more: z.boolean(),
   last_id: z.string(),
@@ -246,7 +246,7 @@ export const ListMessageFilesResponseClassSchema = z.object({
   items: z.any()
 })
 
-export const AssistantFilesSchema = z.object({
+export const AssistantFileObjectSchema = z.object({
   assistant_id: z.string(),
   created_at: z.number(),
   id: z.string(),
@@ -254,7 +254,7 @@ export const AssistantFilesSchema = z.object({
 })
 
 export const ListAssistantFilesResponseClassSchema = z.object({
-  data: z.array(AssistantFilesSchema),
+  data: z.array(AssistantFileObjectSchema),
   first_id: z.string(),
   has_more: z.boolean(),
   last_id: z.string(),
@@ -288,7 +288,7 @@ export const ListFilesResponseSchema = z.object({
   object: ListFilesResponseObjectSchema
 })
 
-export const AmbitiousFunctionSchema = z.object({
+export const IndecentFunctionObjectSchema = z.object({
   description: z.string().optional(),
   name: z.string(),
   parameters: z.record(z.string(), z.any())
@@ -296,7 +296,7 @@ export const AmbitiousFunctionSchema = z.object({
 
 export const CreateRunRequestToolSchema = z.object({
   type: ToolTypeSchema,
-  function: AmbitiousFunctionSchema.optional()
+  function: IndecentFunctionObjectSchema.optional()
 })
 
 export const CreateRunRequestSchema = z.object({
@@ -316,7 +316,7 @@ export const FileCitationSchema = z.object({
   quote: z.string()
 })
 
-export const FileSchema = z.object({
+export const MessageContentTextAnnotationsFileObjectSchema = z.object({
   end_index: z.number(),
   file_citation: FileCitationSchema.optional(),
   start_index: z.number(),
@@ -326,23 +326,23 @@ export const FileSchema = z.object({
 })
 
 export const TextSchema = z.object({
-  annotations: z.array(FileSchema),
+  annotations: z.array(MessageContentTextAnnotationsFileObjectSchema),
   value: z.string()
 })
 
-export const ImageFileClassSchema = z.object({
+export const ImageFileSchema = z.object({
   file_id: z.string()
 })
 
-export const ContentElementSchema = z.object({
-  image_file: ImageFileClassSchema.optional(),
+export const MessageContentObjectSchema = z.object({
+  image_file: ImageFileSchema.optional(),
   type: ContentTypeSchema,
   text: TextSchema.optional()
 })
 
-export const TheMessageObjectSchema = z.object({
+export const MessageObjectSchema = z.object({
   assistant_id: z.string(),
-  content: z.array(ContentElementSchema),
+  content: z.array(MessageContentObjectSchema),
   created_at: z.number(),
   file_ids: z.array(z.string()),
   id: z.string(),
@@ -354,14 +354,14 @@ export const TheMessageObjectSchema = z.object({
 })
 
 export const ListMessagesResponseClassSchema = z.object({
-  data: z.array(TheMessageObjectSchema),
+  data: z.array(MessageObjectSchema),
   first_id: z.string(),
   has_more: z.boolean(),
   last_id: z.string(),
   object: z.string()
 })
 
-export const HilariousFunctionSchema = z.object({
+export const IndigoFunctionObjectSchema = z.object({
   description: z.string().optional(),
   name: z.string(),
   parameters: z.record(z.string(), z.any())
@@ -369,7 +369,7 @@ export const HilariousFunctionSchema = z.object({
 
 export const ModifyAssistantRequestToolSchema = z.object({
   type: ToolTypeSchema,
-  function: HilariousFunctionSchema.optional()
+  function: IndigoFunctionObjectSchema.optional()
 })
 
 export const ModifyAssistantRequestSchema = z.object({
@@ -382,7 +382,7 @@ export const ModifyAssistantRequestSchema = z.object({
   tools: z.array(ModifyAssistantRequestToolSchema).optional()
 })
 
-export const IndecentFunctionSchema = z.object({
+export const StickyFunctionObjectSchema = z.object({
   description: z.string().optional(),
   name: z.string(),
   parameters: z.record(z.string(), z.any())
@@ -390,7 +390,7 @@ export const IndecentFunctionSchema = z.object({
 
 export const CreateAssistantRequestToolSchema = z.object({
   type: ToolTypeSchema,
-  function: IndecentFunctionSchema.optional()
+  function: StickyFunctionObjectSchema.optional()
 })
 
 export const CreateAssistantRequestSchema = z.object({
@@ -403,18 +403,18 @@ export const CreateAssistantRequestSchema = z.object({
   tools: z.array(CreateAssistantRequestToolSchema).optional()
 })
 
-export const IndigoFunctionSchema = z.object({
+export const TentacledFunctionObjectSchema = z.object({
   description: z.string().optional(),
   name: z.string(),
   parameters: z.record(z.string(), z.any())
 })
 
-export const FluffyToolSchema = z.object({
+export const FluffyAssistantToolsSchema = z.object({
   type: ToolTypeSchema,
-  function: IndigoFunctionSchema.optional()
+  function: TentacledFunctionObjectSchema.optional()
 })
 
-export const AssistantSchema = z.object({
+export const AssistantObjectSchema = z.object({
   created_at: z.number(),
   description: z.string(),
   file_ids: z.array(z.string()),
@@ -424,41 +424,41 @@ export const AssistantSchema = z.object({
   model: z.string(),
   name: z.string(),
   object: TentacledObjectSchema,
-  tools: z.array(FluffyToolSchema)
+  tools: z.array(FluffyAssistantToolsSchema)
 })
 
 export const ListAssistantsResponseSchema = z.object({
-  data: z.array(AssistantSchema),
+  data: z.array(AssistantObjectSchema),
   first_id: z.string(),
   has_more: z.boolean(),
   last_id: z.string(),
   object: z.string()
 })
 
-export const StickyFunctionSchema = z.object({
+export const FluffyFunctionObjectSchema = z.object({
   description: z.string().optional(),
   name: z.string(),
   parameters: z.record(z.string(), z.any())
 })
 
-export const PurpleToolSchema = z.object({
+export const PurpleAssistantToolsSchema = z.object({
   type: ToolTypeSchema,
-  function: StickyFunctionSchema.optional()
+  function: FluffyFunctionObjectSchema.optional()
 })
 
-export const TentacledFunctionSchema = z.object({
+export const FluffyFunctionSchema = z.object({
   arguments: z.string(),
   name: z.string()
 })
 
-export const SubmitToolOutputsToolCallSchema = z.object({
-  function: TentacledFunctionSchema,
+export const RunToolCallObjectSchema = z.object({
+  function: FluffyFunctionSchema,
   id: z.string(),
   type: PurpleTypeSchema
 })
 
 export const SubmitToolOutputsSchema = z.object({
-  tool_calls: z.array(SubmitToolOutputsToolCallSchema)
+  tool_calls: z.array(RunToolCallObjectSchema)
 })
 
 export const RequiredActionSchema = z.object({
@@ -471,7 +471,7 @@ export const FluffyLastErrorSchema = z.object({
   message: z.string()
 })
 
-export const ARunOnAThreadSchema = z.object({
+export const RunObjectSchema = z.object({
   assistant_id: z.string(),
   cancelled_at: z.number(),
   completed_at: z.number(),
@@ -489,18 +489,18 @@ export const ARunOnAThreadSchema = z.object({
   started_at: z.number(),
   status: FluffyStatusSchema,
   thread_id: z.string(),
-  tools: z.array(PurpleToolSchema)
+  tools: z.array(PurpleAssistantToolsSchema)
 })
 
 export const ListRunsResponseSchema = z.object({
-  data: z.array(ARunOnAThreadSchema),
+  data: z.array(RunObjectSchema),
   first_id: z.string(),
   has_more: z.boolean(),
   last_id: z.string(),
   object: z.string()
 })
 
-export const FluffyFunctionSchema = z.object({
+export const PurpleFunctionObjectSchema = z.object({
   description: z.string().optional(),
   name: z.string(),
   parameters: z.record(z.string(), z.any())
@@ -508,18 +508,18 @@ export const FluffyFunctionSchema = z.object({
 
 export const CreateThreadAndRunRequestToolSchema = z.object({
   type: ToolTypeSchema,
-  function: FluffyFunctionSchema.optional()
+  function: PurpleFunctionObjectSchema.optional()
 })
 
-export const MessageSchema = z.object({
+export const CreateMessageRequestSchema = z.object({
   content: z.string(),
   file_ids: z.array(z.string()).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   role: MessageRoleSchema
 })
 
-export const ThreadClassSchema = z.object({
-  messages: z.array(MessageSchema).optional(),
+export const CreateThreadRequestSchema = z.object({
+  messages: z.array(CreateMessageRequestSchema).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional()
 })
 
@@ -528,7 +528,7 @@ export const CreateThreadAndRunRequestSchema = z.object({
   instructions: z.string().optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   model: z.string().optional(),
-  thread: ThreadClassSchema.optional(),
+  thread: CreateThreadRequestSchema.optional(),
   tools: z.array(CreateThreadAndRunRequestToolSchema).optional()
 })
 
@@ -542,7 +542,7 @@ export const ImageSchema = z.object({
   file_id: z.string()
 })
 
-export const CodeInterpreterOutputSchema = z.object({
+export const RunStepDetailsToolCallsCodeOutputObjectSchema = z.object({
   logs: z.string().optional(),
   type: OutputTypeSchema,
   image: ImageSchema.optional()
@@ -550,10 +550,10 @@ export const CodeInterpreterOutputSchema = z.object({
 
 export const CodeInterpreterSchema = z.object({
   input: z.string(),
-  outputs: z.array(CodeInterpreterOutputSchema)
+  outputs: z.array(RunStepDetailsToolCallsCodeOutputObjectSchema)
 })
 
-export const ToolCallSchema = z.object({
+export const RunStepDetailsToolCallsObjectSchema = z.object({
   code_interpreter: CodeInterpreterSchema.optional(),
   id: z.string(),
   type: ToolTypeSchema,
@@ -568,7 +568,7 @@ export const MessageCreationSchema = z.object({
 export const StepDetailsSchema = z.object({
   message_creation: MessageCreationSchema.optional(),
   type: StepDetailsTypeSchema,
-  tool_calls: z.array(ToolCallSchema).optional()
+  tool_calls: z.array(RunStepDetailsToolCallsObjectSchema).optional()
 })
 
 export const PurpleLastErrorSchema = z.object({
@@ -576,7 +576,7 @@ export const PurpleLastErrorSchema = z.object({
   message: z.string()
 })
 
-export const RunStepsSchema = z.object({
+export const RunStepObjectSchema = z.object({
   assistant_id: z.string(),
   cancelled_at: z.number(),
   completed_at: z.number(),
@@ -595,7 +595,7 @@ export const RunStepsSchema = z.object({
 })
 
 export const ListRunStepsResponseClassSchema = z.object({
-  data: z.array(RunStepsSchema),
+  data: z.array(RunStepObjectSchema),
   first_id: z.string(),
   has_more: z.boolean(),
   last_id: z.string(),

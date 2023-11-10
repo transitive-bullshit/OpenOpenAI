@@ -1,2 +1,4 @@
 dist/
 .next/
+src/oai.ts
+src/oai-routes.ts

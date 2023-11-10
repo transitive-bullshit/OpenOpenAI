@@ -12,7 +12,8 @@ import {
 } from 'quicktype-core'
 
 const srcFile = './openai-openapi/openapi.yaml'
-const destFile = './src/oai.ts'
+const destFileSchemas = './src/oai.ts'
+const destfileRoutes = './src/oai-routes.ts'
 
 const jsonContentType = 'application/json'
 
@@ -113,6 +114,12 @@ async function main() {
   const componentsToProcess = new Set<string>()
   const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore())
 
+  const subpaths = [
+    ['responses', '200', 'content', jsonContentType, 'schema'],
+    ['requestBody', 'content', jsonContentType, 'schema'],
+    ['requestBody', 'content', 'multipart/form-data', 'schema']
+  ]
+
   for (const path of pathsToProcess) {
     const pathItem = spec.paths[path]
     if (!pathItem) {
@@ -124,15 +131,10 @@ async function main() {
     const httpMethods = Object.keys(pathItem)
     for (const httpMethod of httpMethods) {
       const operation = pathItem[httpMethod]
-      const paths = [
-        ['responses', '200', 'content', jsonContentType, 'schema'],
-        ['requestBody', 'content', jsonContentType, 'schema'],
-        ['requestBody', 'content', 'multipart/form-data', 'schema']
-      ]
 
-      for (const path of paths) {
+      for (const subpath of subpaths) {
         const resolved = new Set<string>()
-        getAndResolve(operation, path, parser.$refs, resolved)
+        getAndResolve(operation, subpath, parser.$refs, resolved)
 
         for (const ref of resolved) {
           componentsToProcess.add(ref)
@@ -140,10 +142,7 @@ async function main() {
       }
 
       if (operation.parameters) {
-        const name = `${operation.operationId
-          .slice(0, 1)
-          .toUpperCase()}${operation.operationId.slice(1)}Params`
-
+        const name = `${titleCase(operation.operationId)}Params`
         const params = convertParametersToJSONSchema(operation.parameters)
 
         if (params.body) {
@@ -204,9 +203,7 @@ async function main() {
             null,
             2
           )
-          if (name === 'ListFilesParams') {
-            console.log(name, 'query', schema)
-          }
+          // console.log(name, 'query', schema)
           await schemaInput.addSource({
             name: `${name}Query`,
             schema
@@ -262,7 +259,7 @@ async function main() {
 
     proccessedComponents.add(ref)
 
-    // console.log(ref, name)
+    // console.log(ref, name, dereferenced)
     await schemaInput.addSource({
       name,
       schema: JSON.stringify(dereferenced, null, 2)
@@ -272,13 +269,14 @@ async function main() {
   const inputData = new InputData()
   inputData.addInput(schemaInput)
 
-  const res = await quicktype({
+  const generatedSource = await quicktype({
     inputData,
     lang: 'TypeScript Zod'
+    // combineClasses: true
   })
 
-  const output = [header]
-    .concat(res.lines)
+  const schemasSource = [header]
+    .concat(generatedSource.lines)
     .join('\n')
     .replace(
       'import * as z from "zod"',
@@ -289,16 +287,194 @@ async function main() {
     .replaceAll(/^.* = z.infer<[^>]*>;?$/gm, '')
     .trim()
 
-  const prettyOutput0 = prettify(output)
+  const prettySchemasSource0 = prettify(schemasSource)
     // simplify a lot of the unnecessary nullable unions
     .replaceAll(/z\s*\.union\(\[\s*z\.null\(\),\s*([^\]]*)\s*\]\)/gm, '$1')
     .replaceAll(/z\s*\.union\(\[\s*([^,]*),\s*z\.null\(\)\s*\]\)/gm, '$1')
     // replace single value enums with literals
     .replaceAll(/z\s*\.enum\(\[\s*('[^']*')\s*\]\)/gm, 'z.literal($1)')
 
-  const prettyOutput = prettify(prettyOutput0)
+  const prettySchemasSource = prettify(prettySchemasSource0)
+  await fs.writeFile(destFileSchemas, prettySchemasSource)
 
-  await fs.writeFile(destFile, prettyOutput)
+  // ---------------------------------------------------------------------------
+
+  // QuickType will sometimes rename schemas for various reasons, so we need to
+  // keep these identifiers in order to resolve them later.
+  const renamedSchemas = new Set<string>(
+    prettySchemasSource
+      .match(/export const (.*)ClassSchema =/g)
+      ?.map((line) => line.replace(/export const (.*)ClassSchema =/, '$1'))
+  )
+
+  function resolveSchemaName(name: string) {
+    return renamedSchemas.has(name) ? `${name}ClassSchema` : `${name}Schema`
+  }
+
+  const routesOutput: string[] = []
+  for (const path of pathsToProcess) {
+    const pathItem = spec.paths[path]
+    if (!pathItem) {
+      throw new Error()
+    }
+
+    const httpMethods = Object.keys(pathItem)
+    for (const httpMethod of httpMethods) {
+      const operation = pathItem[httpMethod]
+      const createRouteParams: any = {
+        method: httpMethod,
+        path,
+        summary: operation.summary,
+        description: operation.description,
+        request: {},
+        responses: {}
+      }
+
+      for (const subpath of subpaths) {
+        const resolved = new Set<string>()
+        const resolvedOperation = getAndResolve(
+          operation,
+          subpath,
+          parser.$refs,
+          resolved
+        )
+
+        if (!resolvedOperation || !resolved.size) continue
+        const ref = Array.from(resolved)[0]
+        const shortName = ref.split('/').pop()!
+        const name = resolveSchemaName(shortName)
+
+        if (subpath[0] === 'responses') {
+          createRouteParams.responses = {
+            ...createRouteParams.responses,
+            [subpath[1]]: {
+              description: resolvedOperation.responses[subpath[1]].description,
+              [subpath[2]]: {
+                [subpath[3]]: {
+                  [subpath[4]]: `oai.${name}.openapi('${shortName}')`
+                }
+              }
+            }
+          }
+        } else if (subpath[0] === 'requestBody') {
+          createRouteParams.request.body = {
+            description: resolvedOperation.requestBody.description,
+            required: resolvedOperation.requestBody.required,
+            [subpath[1]]: {
+              [subpath[2]]: {
+                [subpath[3]]: `oai.${name}.openapi('${shortName}')`
+              }
+            }
+          }
+        }
+      }
+
+      if (operation.parameters) {
+        const namePrefix = `${titleCase(operation.operationId)}Params`
+        const params = convertParametersToJSONSchema(operation.parameters)
+
+        if (params.body) {
+          const schema = JSON.stringify(
+            dereference(params.body, parser.$refs),
+            null,
+            2
+          )
+          // console.log(namePrefix, 'body', schema)
+          await schemaInput.addSource({
+            name: `${namePrefix}Body`,
+            schema
+          })
+
+          const name = resolveSchemaName(`${namePrefix}Body`)
+          createRouteParams.request.body = `oai.${name}`
+        }
+
+        if (params.formData) {
+          const schema = JSON.stringify(
+            dereference(params.formData, parser.$refs),
+            null,
+            2
+          )
+          // console.log(namePrefix, 'formData', schema)
+          await schemaInput.addSource({
+            name: `${namePrefix}FormData`,
+            schema
+          })
+
+          // TODO: this seems unsupported in zod-to-openapi
+          // const name = resolveSchemaName(`${namePrefix}FormData`)
+          // createRouteParams.request.body = `oai.${name}`
+        }
+
+        if (params.headers) {
+          const schema = JSON.stringify(
+            dereference(params.headers, parser.$refs),
+            null,
+            2
+          )
+          // console.log(namePrefix, 'headers', schema)
+          await schemaInput.addSource({
+            name: `${namePrefix}Headers`,
+            schema
+          })
+
+          const name = resolveSchemaName(`${namePrefix}Headers`)
+          createRouteParams.request.headers = `oai.${name}`
+        }
+
+        if (params.path) {
+          const schema = JSON.stringify(
+            dereference(params.path, parser.$refs),
+            null,
+            2
+          )
+          // console.log(namePrefix, 'path', schema)
+          await schemaInput.addSource({
+            name: `${namePrefix}Path`,
+            schema
+          })
+
+          const name = resolveSchemaName(`${namePrefix}Path`)
+          createRouteParams.request.params = `oai.${name}`
+        }
+
+        if (params.query) {
+          const schema = JSON.stringify(
+            dereference(params.query, parser.$refs),
+            null,
+            2
+          )
+          // console.log(namePrefix, 'query', schema)
+          await schemaInput.addSource({
+            name: `${namePrefix}Query`,
+            schema
+          })
+
+          const name = resolveSchemaName(`${namePrefix}Query`)
+          createRouteParams.request.query = `oai.${name}`
+        }
+      }
+
+      const routeOutput = `export const ${
+        operation.operationId
+      } = createRoute(${JSON.stringify(createRouteParams, null, 2)})`
+        .replaceAll(/"(oai\.[^"]*)"/g, '$1')
+        .replaceAll(/'(oai\.[^']*)'/g, '$1')
+
+      // ListFilesParamsQuery => ListFilesParamsQueryClassSchema
+      routesOutput.push(routeOutput)
+    }
+  }
+
+  const routesSource = [
+    header,
+    "import { createRoute } from '@hono/zod-openapi'",
+    "import * as oai from './oai'"
+  ]
+    .concat(routesOutput)
+    .join('\n\n')
+  const prettyRoutesSource = prettify(routesSource)
+  await fs.writeFile(destfileRoutes, prettyRoutesSource)
 }
 
 function prettify(source: string): string {
@@ -312,6 +488,10 @@ function prettify(source: string): string {
     arrowParens: 'always',
     trailingComma: 'none'
   })
+}
+
+function titleCase(identifier: string): string {
+  return `${identifier.slice(0, 1).toUpperCase()}${identifier.slice(1)}`
 }
 
 function getAndResolve<T extends any = any>(
@@ -342,7 +522,11 @@ function getAndResolve<T extends any = any>(
     return null
   }
 
-  return getAndResolve(value, keys, refs, resolved)
+  const resolvedValue = getAndResolve(value, keys, refs, resolved)
+  return {
+    ...obj,
+    [key]: resolvedValue
+  }
 }
 
 function dereference<T extends any = any>(
@@ -356,11 +540,13 @@ function dereference<T extends any = any>(
     return obj.map((item) => dereference(item, refs, resolved)) as T
   } else if (typeof obj === 'object') {
     if ('$ref' in obj) {
-      const derefed = refs.get(obj.$ref as string)
+      const ref = obj.$ref as string
+      const derefed = refs.get(ref as string)
       if (!derefed) {
         return obj
       }
-      resolved?.add(obj.$ref as string)
+      resolved?.add(ref)
+      derefed.title = ref.split('/').pop()!
       return dereference(derefed, refs, resolved)
     } else {
       return Object.fromEntries(

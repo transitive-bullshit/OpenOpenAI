@@ -21,9 +21,11 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "declaration": true,
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
     "noEmit": false,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "."
   }
 }
