@@ -7,6 +7,7 @@
 </p>
 
 - [Intro](#intro)
+- [TODO](#todo)
 - [Development](#development)
   - [Environment](#environment)
 - [License](#license)
@@ -14,6 +15,14 @@
 ## Intro
 
 TODO
+
+## TODO
+
+ListAssistantsParamsQueryClassSchema
+ListMessagesParamsQueryClassSchema number causes issue with typings of all params
+
+- no listThreads?
+- no deleteMessage?
 
 ## Development
 

@@ -611,7 +611,7 @@ export const GetMessageFileParamsPathClassSchema = z.object({
 export const ListMessageFilesParamsQueryClassSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
-  limit: z.number().optional(),
+  // limit: z.number().optional(),
   order: OrderSchema.optional()
 })
 
@@ -637,7 +637,7 @@ export const CreateAssistantFileParamsPathClassSchema = z.object({
 export const ListAssistantFilesParamsQueryClassSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
-  limit: z.number().optional(),
+  // limit: z.number().optional(),
   order: OrderSchema.optional()
 })
 
@@ -654,7 +654,7 @@ export const GetRunStepParamsPathClassSchema = z.object({
 export const ListRunStepsParamsQueryClassSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
-  limit: z.number().optional(),
+  // limit: z.number().optional(),
   order: OrderSchema.optional()
 })
 
@@ -690,7 +690,7 @@ export const CreateRunParamsPathClassSchema = z.object({
 export const ListRunsParamsQueryClassSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
-  limit: z.number().optional(),
+  // limit: z.number().optional(),
   order: OrderSchema.optional()
 })
 
@@ -715,7 +715,7 @@ export const CreateMessageParamsPathClassSchema = z.object({
 export const ListMessagesParamsQueryClassSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
-  limit: z.number().optional(),
+  // limit: z.number().optional(),
   order: OrderSchema.optional()
 })
 
@@ -750,7 +750,7 @@ export const GetAssistantParamsPathClassSchema = z.object({
 export const ListAssistantsParamsQueryClassSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
-  limit: z.number().optional(),
+  // limit: z.number().optional(),
   order: OrderSchema.optional()
 })
 
