@@ -13,15 +13,6 @@ const listFiles = createRoute({
   summary: 'Retrieve the user',
   request: {
     query: oai.ListFilesParamsQueryClassSchema
-    // query: z.object({
-    //   purpose: z.union([z.null(), z.string()]).optional()
-    //   // .openapi({
-    //   //   param: {
-    //   //     in: 'query',
-    //   //     name: 'purpose'
-    //   //   }
-    //   // })
-    // })
   },
   responses: {
     200: {
@@ -37,8 +28,7 @@ const listFiles = createRoute({
 
 app.openapi(listFiles, (c) => {
   // TODO: this should work
-  // const { purpose } = c.req.valid('query')
-  const purpose = c.req.query('purpose')
+  const { purpose } = c.req.valid('query')
   console.log({ purpose })
 
   return c.jsonT({
