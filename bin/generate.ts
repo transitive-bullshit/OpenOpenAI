@@ -311,7 +311,11 @@ async function main() {
     return renamedSchemas.has(name) ? `${name}ClassSchema` : `${name}Schema`
   }
 
+  // NOTE: We're looping through the paths a second time here to handle route
+  // info, because we can only do so after we've resolved the generated schema
+  // names via QuickType.
   const routesOutput: string[] = []
+
   for (const path of pathsToProcess) {
     const pathItem = spec.paths[path]
     if (!pathItem) {
