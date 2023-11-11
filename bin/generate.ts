@@ -285,7 +285,7 @@ async function main() {
     )
     .replaceAll(/OpenAi/g, 'OpenAI')
     // remove inferred types, as we don't use them
-    .replaceAll(/^.* = z.infer<[^>]*>;?$/gm, '')
+    // .replaceAll(/^.* = z.infer<[^>]*>;?$/gm, '')
     .trim()
 
   const prettySchemasSource0 = prettify(schemasSource)

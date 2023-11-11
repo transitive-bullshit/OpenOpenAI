@@ -18,6 +18,8 @@ TODO
 
 ## TODO
 
+ThreadObjectSchema is incorrectly mapped
+
 ListAssistantsParamsQueryClassSchema
 ListMessagesParamsQueryClassSchema number causes issue with typings of all params
 

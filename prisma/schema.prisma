@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
+model File {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  bytes          Int
+  filename       String
+  purpose        String
+  status         FileStatus?
+  status_details String?
+  /// [FileObject]
+  object         String      @default("file")
+
+  @@index([purpose])
+}
+
+model Assistant {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  description  String?
+  file_ids     String[] @default([])
+  instructions String?
+  /// [Metadata]
+  metadata     Json?
+  model        String
+  name         String?
+  /// [Tool]
+  tools        Json[]   @default([])
+  /// [AssistantObject]
+  object       String   @default("assistant")
+
+  files     AssistantFile[]
+  messages  Message[]
+  runs      Run[]
+  run_steps RunStep[]
+}
+
+model AssistantFile {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  assistant_id String
+  /// [AssistantFileObject]
+  object       String @default("assistant.file")
+
+  assistant Assistant @relation(fields: [assistant_id], references: [id])
+}
+
+model Thread {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  /// [Metadata]
+  metadata Json?
+  /// [ThreadObject]
+  object   String @default("thread")
+
+  messages  Message[]
+  runs      Run[]
+  run_steps RunStep[]
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  /// [MessageContent]
+  content      Json[]
+  file_ids     String[] @default([])
+  /// [Metadata]
+  metadata     Json?
+  role         Role
+  assistant_id String
+  thread_id    String
+  run_id       String
+  /// [MessageObject]
+  object       String   @default("thread.message")
+
+  files MessageFile[]
+
+  thread    Thread    @relation(fields: [thread_id], references: [id])
+  assistant Assistant @relation(fields: [assistant_id], references: [id])
+  run       Run       @relation(fields: [run_id], references: [id])
+}
+
+model MessageFile {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  message_id String
+  /// [MessageFileObject]
+  object     String @default("thread.message.file")
+
+  message Message @relation(fields: [message_id], references: [id])
+}
+
+model Run {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  instructions    String
+  model           String
+  file_ids        String[]  @default([])
+  /// [Metadata]
+  metadata        Json?
+  /// [LastError]
+  last_error      Json
+  /// [RequiredAction]
+  required_action Json
+  /// [Tool]
+  tools           Json[]    @default([])
+  status          RunStatus
+  started_at      DateTime?
+  completed_at    DateTime?
+  cancelled_at    DateTime?
+  expires_at      DateTime?
+  failed_at       DateTime?
+  assistant_id    String
+  thread_id       String
+  /// [RunObject]
+  object          String    @default("thread.run")
+
+  messages  Message[]
+  run_steps RunStep[]
+
+  thread    Thread    @relation(fields: [thread_id], references: [id])
+  assistant Assistant @relation(fields: [assistant_id], references: [id])
+}
+
+model RunStep {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  /// [Metadata]
+  metadata     Json?
+  /// [LastError]
+  last_error   Json
+  /// [StepDetails]
+  step_details Json
+  status       RunStepStatus
+  type         RunStepType
+  completed_at DateTime?
+  cancelled_at DateTime?
+  expires_at   DateTime?
+  failed_at    DateTime?
+  assistant_id String
+  thread_id    String
+  run_id       String
+  /// [RunStepObject]
+  object       String        @default("thread.run.step")
+
+  thread    Thread    @relation(fields: [thread_id], references: [id])
+  assistant Assistant @relation(fields: [assistant_id], references: [id])
+  run       Run       @relation(fields: [run_id], references: [id])
+}
+
+enum FileStatus {
+  error
+  processed
+  uploaded
+}
+
+enum Role {
+  assistant
+  user
+  system
+  function
+  tool
+}
+
+enum RunStatus {
+  cancelled
+  cancelling
+  completed
+  expired
+  failed
+  in_progress
+  queued
+  requires_action
+}
+
+enum RunStepStatus {
+  cancelled
+  completed
+  expired
+  failed
+  in_progress
+}
+
+enum RunStepType {
+  message_creation
+  tool_calls
+}

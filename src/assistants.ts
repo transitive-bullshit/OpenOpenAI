@@ -1,6 +1,8 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
 import * as routes from './generated/oai-routes'
+import * as utils from './utils'
+import { prisma } from './db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -25,9 +27,11 @@ app.openapi(routes.createAssistant, async (c) => {
   const body = c.req.valid('json')
   console.log('createAssistant', { body })
 
-  // TODO
+  const res = await prisma.assistant.create({
+    data: utils.convertOAIToPrisma(body)
+  })
 
-  return c.jsonT({} as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.getAssistant, async (c) => {
