@@ -1,26 +1,21 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
 import * as routes from './generated/oai-routes'
+import * as utils from './utils'
+import { prisma } from './db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
 app.openapi(routes.listRuns, async (c) => {
   const { thread_id } = c.req.valid('param')
+  const query = c.req.valid('query')
+  console.log('listRuns', { thread_id, query })
 
-  // TODO: there is a type issue with non-string query params not being recognized
-  // const { after, before, limit, order } = c.req.valid('query')
-  // const { after, before, limit, order } = c.req.query()
-  console.log('listRuns', { thread_id })
+  const params = utils.getPrismaFindManyParams(query)
+  const res = await prisma.run.findMany(params)
 
-  // TODO
-
-  return c.jsonT({
-    data: [],
-    first_id: '',
-    last_id: '',
-    has_more: false,
-    object: 'list' as const
-  })
+  // TODO: figure out why the types aren't working here
+  return c.jsonT(utils.getPaginatedObject(res, params))
 })
 
 app.openapi(routes.createThreadAndRun, async (c) => {
@@ -82,29 +77,32 @@ app.openapi(routes.cancelRun, async (c) => {
 
 app.openapi(routes.listRunSteps, async (c) => {
   const { thread_id, run_id } = c.req.valid('param')
-  // TODO: there is a type issue with non-string query params not being recognized
-  // const { after, before, limit, order } = c.req.valid('query')
-  // const { after, before, limit, order } = c.req.query()
-  console.log('listRunSteps', { thread_id, run_id })
+  const query = c.req.valid('query')
+  console.log('listRunSteps', { thread_id, run_id, query })
 
-  // TODO
+  console.log('listRuns', { thread_id, query })
 
-  return c.jsonT({
-    data: [],
-    first_id: '',
-    last_id: '',
-    has_more: false,
-    object: 'list' as const
-  })
+  const params = utils.getPrismaFindManyParams(query)
+  const res = await prisma.runStep.findMany(params)
+
+  // TODO: figure out why the types aren't working here
+  return c.jsonT(utils.getPaginatedObject(res, params))
 })
 
 app.openapi(routes.getRunStep, async (c) => {
   const { thread_id, run_id, step_id } = c.req.valid('param')
   console.log('getRunStep', { thread_id, run_id, step_id })
 
-  // TODO
+  const res = await prisma.message.findUnique({
+    where: {
+      id: step_id,
+      thread_id,
+      run_id
+    }
+  })
 
-  return c.jsonT({} as any)
+  if (!res) return c.notFound() as any
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 export default app
