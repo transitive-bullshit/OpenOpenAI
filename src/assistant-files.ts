@@ -9,6 +9,7 @@ const app: OpenAPIHono = new OpenAPIHono()
 app.openapi(routes.listAssistantFiles, async (c) => {
   const { assistant_id } = c.req.valid('param')
   const query = c.req.valid('query')
+  console.log('listAssistantFiles', { assistant_id, query })
 
   const params = utils.getPrismaFindManyParams(query)
   const res = await prisma.assistantFile.findMany({
@@ -26,6 +27,8 @@ app.openapi(routes.createAssistantFile, async (c) => {
   const { assistant_id } = c.req.valid('param')
   const body = c.req.valid('json')
   console.log('createAssistantFile', { assistant_id, body })
+
+  // TODO: add to assistant.file_ids?
 
   // TODO: are file ids the same as assistant file ids?
   const res = await prisma.assistantFile.create({

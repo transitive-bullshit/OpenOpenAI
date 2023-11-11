@@ -42,7 +42,8 @@ app.openapi(routes.createFile, async (c) => {
     }
   })
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  // TODO: this cast shouldn't be necessary
+  return c.jsonT(utils.convertPrismaToOAI(res) as any)
 })
 
 app.openapi(routes.deleteFile, async (c) => {

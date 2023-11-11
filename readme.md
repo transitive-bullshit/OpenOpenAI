@@ -28,6 +28,9 @@ ListMessagesParamsQueryClassSchema number causes issue with typings of all param
 
 - prefix ids (see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719))
 
+- createFile
+- downloadFile
+
 ## Development
 
 - [node](https://nodejs.org/en) >= 18

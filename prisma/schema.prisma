@@ -91,17 +91,17 @@ model Message {
   /// [Metadata]
   metadata     Json?
   role         Role
-  assistant_id String
+  assistant_id String?
   thread_id    String
-  run_id       String
+  run_id       String?
   /// [MessageObject]
   object       String   @default("thread.message")
 
   files MessageFile[]
 
-  thread    Thread    @relation(fields: [thread_id], references: [id])
-  assistant Assistant @relation(fields: [assistant_id], references: [id])
-  run       Run       @relation(fields: [run_id], references: [id])
+  thread    Thread     @relation(fields: [thread_id], references: [id])
+  assistant Assistant? @relation(fields: [assistant_id], references: [id])
+  run       Run?       @relation(fields: [run_id], references: [id])
 }
 
 model MessageFile {

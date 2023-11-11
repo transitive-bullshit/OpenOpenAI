@@ -9,7 +9,7 @@ const app: OpenAPIHono = new OpenAPIHono()
 app.openapi(routes.listMessageFiles, async (c) => {
   const { thread_id, message_id } = c.req.valid('param')
   const query = c.req.valid('query')
-  console.log('listMessageFiles', { thread_id, message_id, ...query })
+  console.log('listMessageFiles', { thread_id, message_id, query })
 
   const params = utils.getPrismaFindManyParams(query)
   const res = await prisma.messageFile.findMany(params)

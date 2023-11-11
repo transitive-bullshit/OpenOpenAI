@@ -8,7 +8,7 @@ const app: OpenAPIHono = new OpenAPIHono()
 
 app.openapi(routes.listAssistants, async (c) => {
   const query = c.req.valid('query')
-  console.log('listAssistantFiles', query)
+  console.log('listAssistantFiles', { query })
 
   const params = utils.getPrismaFindManyParams(query)
   const res = await prisma.assistant.findMany(params)
