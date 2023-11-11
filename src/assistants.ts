@@ -7,18 +7,17 @@ import { prisma } from './db'
 const app: OpenAPIHono = new OpenAPIHono()
 
 app.openapi(routes.listAssistants, async (c) => {
-  // TODO: there is a type issue with non-string query params not being recognized
-  // const { after, before, limit, order } = c.req.valid('query')
-  // const { after, before, limit, order } = c.req.query()
-  console.log('listAssistantFiles')
+  const query = c.req.valid('query')
+  console.log('listAssistantFiles', query)
 
-  // TODO
+  const params = utils.getPrismaFindManyParams(query)
+  const res = await prisma.assistant.findMany(params)
 
   return c.jsonT({
-    data: [],
-    first_id: '',
-    last_id: '',
-    has_more: false,
+    data: res.map(utils.convertPrismaToOAI),
+    first_id: res[0]?.id,
+    last_id: res[res.length - 1]?.id,
+    has_more: res.length >= params.take,
     object: 'list' as const
   })
 })
@@ -38,9 +37,14 @@ app.openapi(routes.getAssistant, async (c) => {
   const { assistant_id } = c.req.valid('param')
   console.log('getAssistant', { assistant_id })
 
-  // TODO
+  const res = await prisma.assistant.findUnique({
+    where: {
+      id: assistant_id
+    }
+  })
 
-  return c.jsonT({} as any)
+  if (!res) return c.notFound() as any
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.modifyAssistant, async (c) => {
@@ -48,20 +52,29 @@ app.openapi(routes.modifyAssistant, async (c) => {
   const body = c.req.valid('json')
   console.log('modifyAssistant', { assistant_id, body })
 
-  // TODO
+  const res = await prisma.assistant.update({
+    where: {
+      id: assistant_id
+    },
+    data: utils.convertOAIToPrisma(body)
+  })
 
-  return c.jsonT({} as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.deleteAssistant, async (c) => {
   const { assistant_id } = c.req.valid('param')
   console.log('deleteAssistant', { assistant_id })
 
-  // TODO
+  const res = await prisma.assistant.delete({
+    where: {
+      id: assistant_id
+    }
+  })
 
   return c.jsonT({
     deleted: true,
-    id: assistant_id,
+    id: res.id,
     object: 'assistant.deleted' as const
   })
 })

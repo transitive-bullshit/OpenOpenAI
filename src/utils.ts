@@ -126,3 +126,44 @@ export function removeUndefinedAndNullValues<T extends Record<string, unknown>>(
   )
   return obj as RequiredNonNullableObject<T>
 }
+
+export function getPrismaFindManyParams({
+  after,
+  before,
+  limit,
+  order,
+  defaultLimit = 10
+}: {
+  after?: string
+  before?: string
+  limit?: string
+  order?: string
+  defaultLimit?: number
+} = {}) {
+  const takeTemp = parseInt(limit ?? '', 10)
+  const take = isNaN(takeTemp) ? defaultLimit : takeTemp
+
+  const params: any = {
+    take,
+    orderBy: {
+      created_at: order || 'desc'
+    }
+  }
+
+  if (after) {
+    params.cursor = {
+      id: after
+    }
+    params.skip = 1
+  }
+
+  if (before) {
+    params.where = {
+      id: {
+        lt: before
+      }
+    }
+  }
+
+  return params
+}

@@ -11,6 +11,18 @@ import threads from './threads'
 
 const app = new OpenAPIHono()
 
+app.use('*', async (c, next) => {
+  try {
+    await next()
+  } catch (err: any) {
+    if (err.code === 'P2025') {
+      return c.notFound() as any
+    } else {
+      throw err
+    }
+  }
+})
+
 app.route('', files)
 app.route('', assistants)
 app.route('', assistantFiles)
@@ -26,5 +38,7 @@ app.doc('/openapi', {
     title: 'OpenAPI'
   }
 })
+
+app.showRoutes()
 
 serve(app)
