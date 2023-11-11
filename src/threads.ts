@@ -49,7 +49,8 @@ app.openapi(routes.createThread, async (c) => {
     }
   )
 
-  return c.jsonT(utils.convertPrismaToOAI(thread))
+  // TODO: this cast shouldn't be necessary
+  return c.jsonT(utils.convertPrismaToOAI(thread) as any)
 })
 
 app.openapi(routes.getThread, async (c) => {
@@ -78,7 +79,8 @@ app.openapi(routes.modifyThread, async (c) => {
     data: utils.convertOAIToPrisma(body)
   })
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  // TODO: this cast shouldn't be necessary
+  return c.jsonT(utils.convertPrismaToOAI(res) as any)
 })
 
 app.openapi(routes.deleteThread, async (c) => {
