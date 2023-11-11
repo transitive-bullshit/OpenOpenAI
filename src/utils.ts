@@ -167,3 +167,15 @@ export function getPrismaFindManyParams({
 
   return params
 }
+
+export function getPaginatedObject<
+  T extends Record<string, unknown> & { id: string }
+>(data: T[], params: any) {
+  return {
+    data: data.map(convertPrismaToOAI),
+    first_id: data[0]?.id,
+    last_id: data[data.length - 1]?.id,
+    has_more: data.length >= params.take,
+    object: 'list' as const
+  }
+}

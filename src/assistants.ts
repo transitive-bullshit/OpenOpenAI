@@ -13,13 +13,7 @@ app.openapi(routes.listAssistants, async (c) => {
   const params = utils.getPrismaFindManyParams(query)
   const res = await prisma.assistant.findMany(params)
 
-  return c.jsonT({
-    data: res.map(utils.convertPrismaToOAI),
-    first_id: res[0]?.id,
-    last_id: res[res.length - 1]?.id,
-    has_more: res.length >= params.take,
-    object: 'list' as const
-  })
+  return c.jsonT(utils.getPaginatedObject(res, params))
 })
 
 app.openapi(routes.createAssistant, async (c) => {

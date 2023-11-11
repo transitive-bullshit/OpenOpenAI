@@ -1,27 +1,25 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
 import * as routes from './generated/oai-routes'
+import * as utils from './utils'
+import { prisma } from './db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
 app.openapi(routes.listAssistantFiles, async (c) => {
   const { assistant_id } = c.req.valid('param')
+  const query = c.req.valid('query')
 
-  // TODO: there is a type issue with non-string query params not being recognized
-  // const { after, before, limit, order } = c.req.valid('query')
-  // const { after, before, limit, order } = c.req.query()
-  console.log('listAssistantFiles', { assistant_id })
-
-  // TODO
-
-  return c.jsonT({
-    data: [],
-    first_id: '',
-    last_id: '',
-    has_more: false,
-    object: 'list' as const
-    // items: {} // TODO: why does this exist on the response type?
+  const params = utils.getPrismaFindManyParams(query)
+  const res = await prisma.assistantFile.findMany({
+    ...params,
+    where: {
+      ...params?.where,
+      assistant_id
+    }
   })
+
+  return c.jsonT(utils.getPaginatedObject(res, params))
 })
 
 app.openapi(routes.createAssistantFile, async (c) => {
@@ -29,20 +27,31 @@ app.openapi(routes.createAssistantFile, async (c) => {
   const body = c.req.valid('json')
   console.log('createAssistantFile', { assistant_id, body })
 
-  // TODO
+  // TODO: are file ids the same as assistant file ids?
+  const res = await prisma.assistantFile.create({
+    data: {
+      id: utils.convertOAIToPrisma(body).file_id,
+      assistant_id
+    }
+  })
 
-  return c.jsonT({} as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.deleteAssistantFile, async (c) => {
   const { assistant_id, file_id } = c.req.valid('param')
   console.log('deleteAssistantFile', { assistant_id, file_id })
 
-  // TODO
+  const res = await prisma.assistantFile.delete({
+    where: {
+      id: file_id,
+      assistant_id
+    }
+  })
 
   return c.jsonT({
     deleted: true,
-    id: file_id,
+    id: res.id,
     object: 'assistant.file.deleted' as const
   })
 })
@@ -51,11 +60,15 @@ app.openapi(routes.getAssistantFile, async (c) => {
   const { assistant_id, file_id } = c.req.valid('param')
   console.log('getAssistantFile', { assistant_id, file_id })
 
-  // TODO
+  const res = await prisma.assistantFile.findUnique({
+    where: {
+      id: file_id,
+      assistant_id
+    }
+  })
 
-  return c.jsonT({
-    object: 'file' as const
-  } as any)
+  if (!res) return c.notFound() as any
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 export default app

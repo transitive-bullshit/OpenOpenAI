@@ -1,36 +1,43 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
 import * as routes from './generated/oai-routes'
+import * as utils from './utils'
+import { prisma } from './db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
 app.openapi(routes.listMessageFiles, async (c) => {
-  // TODO
   const { thread_id, message_id } = c.req.valid('param')
+  const query = c.req.valid('query')
+  console.log('listMessageFiles', { thread_id, message_id, ...query })
 
-  // TODO: there is a type issue with non-string query params not being recognized
-  // const { after, before, order } = c.req.valid('query')
-  // const { after, before, limit, order } = c.req.query()
-  console.log('listMessageFiles', { thread_id, message_id })
+  const params = utils.getPrismaFindManyParams(query)
+  const res = await prisma.messageFile.findMany(params)
 
-  // TODO
-
-  return c.jsonT({
-    data: [],
-    first_id: '',
-    last_id: '',
-    has_more: false,
-    object: 'list' as const
-  })
+  return c.jsonT(utils.getPaginatedObject(res, params))
 })
 
 app.openapi(routes.getMessageFile, async (c) => {
   const { thread_id, message_id, file_id } = c.req.valid('param')
   console.log('getMessageFile', { thread_id, message_id, file_id })
 
-  // TODO
+  const message = await prisma.message.findUnique({
+    where: {
+      id: message_id
+    }
+  })
+  if (!message) return c.notFound() as any
+  if (message.thread_id !== thread_id) return c.notFound() as any
 
-  return c.jsonT({ object: 'thread.message.file' as const } as any)
+  const messageFile = await prisma.messageFile.findUnique({
+    where: {
+      id: file_id
+    }
+  })
+  if (!messageFile) return c.notFound() as any
+  if (messageFile.message_id !== message_id) return c.notFound() as any
+
+  return c.jsonT(utils.convertPrismaToOAI(messageFile))
 })
 
 export default app

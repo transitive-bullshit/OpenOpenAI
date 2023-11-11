@@ -61,6 +61,8 @@ model AssistantFile {
   object       String @default("assistant.file")
 
   assistant Assistant @relation(fields: [assistant_id], references: [id])
+
+  @@index([assistant_id, id])
 }
 
 model Thread {

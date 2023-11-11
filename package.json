@@ -16,6 +16,7 @@
     "clean": "del dist",
     "dev": "tsc --watch",
     "prepare": "husky install",
+    "precommit": "lint-staged",
     "release": "np",
     "test": "run-p test:*",
     "test:format": "prettier --check \"**/*.{js,ts,tsx}\"",
