@@ -17,6 +17,9 @@ dependencies:
   hono:
     specifier: ^3.9.2
     version: 3.9.2
+  p-map:
+    specifier: ^6.0.0
+    version: 6.0.0
   zod:
     specifier: ^3.22.4
     version: 3.22.4
@@ -4949,6 +4952,11 @@ packages:
     dependencies:
       aggregate-error: 4.0.1
     dev: true
+
+  /p-map@6.0.0:
+    resolution: {integrity: sha512-T8BatKGY+k5rU+Q/GTYgrEf2r4xRMevAN5mtXc2aPc4rS1j3s+vWTaO2Wag94neXuCAUAs8cxBL9EeB5EA6diw==}
+    engines: {node: '>=16'}
+    dev: false
 
   /p-memoize@7.1.1:
     resolution: {integrity: sha512-DZ/bONJILHkQ721hSr/E9wMz5Am/OTJ9P6LhLFo2Tu+jL8044tgc9LwHO8g4PiaYePnlVVRAJcKmgy8J9MVFrA==}
