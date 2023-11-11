@@ -13,7 +13,7 @@ generator json {
 }
 
 model File {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -29,7 +29,7 @@ model File {
 }
 
 model Assistant {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -52,7 +52,7 @@ model Assistant {
 }
 
 model AssistantFile {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -64,7 +64,7 @@ model AssistantFile {
 }
 
 model Thread {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -79,7 +79,7 @@ model Thread {
 }
 
 model Message {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -103,7 +103,7 @@ model Message {
 }
 
 model MessageFile {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -115,7 +115,7 @@ model MessageFile {
 }
 
 model Run {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
@@ -149,7 +149,7 @@ model Run {
 }
 
 model RunStep {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt @ignore
 
