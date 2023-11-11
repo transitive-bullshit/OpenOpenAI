@@ -8,6 +8,7 @@ datasource db {
 }
 
 generator json {
+  // https://github.com/arthurfiorette/prisma-json-types-generator
   provider = "prisma-json-types-generator"
 }
 
