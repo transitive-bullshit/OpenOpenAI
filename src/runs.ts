@@ -174,7 +174,8 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
       )
 
     case 'requires_action': {
-      const toolCalls = runStep.step_details.tool_calls!
+      const toolCalls = runStep.step_details?.tool_calls
+      if (!toolCalls) throw createHttpError(500, 'Invalid tool call')
 
       for (const toolOutput of body.tool_outputs) {
         const toolCall = toolCalls.find(
@@ -209,9 +210,10 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
 
       runStep.status = 'in_progress'
 
+      const { id, object, created_at, ...runStepUpdate } = runStep as any
       await prisma.runStep.update({
         where: { id: runStep.id },
-        data: runStep
+        data: runStepUpdate
       })
 
       // TODO: kick off runStep
