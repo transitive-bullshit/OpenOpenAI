@@ -2,3 +2,4 @@ dist/
 .next/
 src/generated/oai.ts
 src/generated/oai-routes.ts
+openai-openapi/
