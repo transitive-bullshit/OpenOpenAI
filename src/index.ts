@@ -6,6 +6,7 @@ import assistants from './assistants'
 import files from './files'
 import messageFiles from './message-files'
 import messages from './messages'
+import runSteps from './run-steps'
 import runs from './runs'
 import threads from './threads'
 
@@ -30,6 +31,7 @@ app.route('', threads)
 app.route('', messages)
 app.route('', messageFiles)
 app.route('', runs)
+app.route('', runSteps)
 
 app.doc('/openapi', {
   openapi: '3.0.0',

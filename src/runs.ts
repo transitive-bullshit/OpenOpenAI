@@ -89,36 +89,21 @@ app.openapi(routes.cancelRun, async (c) => {
   // TODO
   c.status(501)
 
-  return c.jsonT({} as any)
-})
-
-app.openapi(routes.listRunSteps, async (c) => {
-  const { thread_id, run_id } = c.req.valid('param')
-  const query = c.req.valid('query')
-  console.log('listRunSteps', { thread_id, run_id, query })
-
-  console.log('listRuns', { thread_id, query })
-
-  const params = utils.getPrismaFindManyParams(query)
-  const res = await prisma.runStep.findMany(params)
-
-  // TODO: figure out why the types aren't working here
-  return c.jsonT(utils.getPaginatedObject(res, params) as any)
-})
-
-app.openapi(routes.getRunStep, async (c) => {
-  const { thread_id, run_id, step_id } = c.req.valid('param')
-  console.log('getRunStep', { thread_id, run_id, step_id })
-
-  const res = await prisma.runStep.findUnique({
+  const res = await prisma.run.update({
     where: {
-      id: step_id,
-      thread_id,
-      run_id
+      id: run_id,
+      thread_id
+    },
+    data: {
+      status: 'cancelling',
+      cancelled_at: new Date()
     }
   })
 
-  if (!res) return c.notFound() as any
+  // TODO: actual cancellation => `cancelled`
+
+  // TODO: assistant_id and run_id may not exist here, but the output
+  // types are too strict
   return c.jsonT(utils.convertPrismaToOAI(res) as any)
 })
 
