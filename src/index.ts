@@ -12,15 +12,27 @@ import threads from './threads'
 
 const app = new OpenAPIHono()
 
-app.use('*', async (c, next) => {
+app.use('*', async function errorHandler(c, next) {
   try {
     await next()
   } catch (err: any) {
+    const statusCode = err.statusCode || err.status
+
+    // handle https://github.com/jshttp/http-errors
+    if (statusCode) {
+      c.status(statusCode)
+      if (err.message) {
+        c.text(err.message)
+      }
+      return
+    }
+
+    // handle prisma errors
     if (err.code === 'P2025') {
       return c.notFound() as any
-    } else {
-      throw err
     }
+
+    throw err
   }
 })
 

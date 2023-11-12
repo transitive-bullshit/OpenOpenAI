@@ -29,6 +29,7 @@
     "@hono/zod-openapi": "^0.8.3",
     "@prisma/client": "^5.5.2",
     "hono": "^3.9.2",
+    "http-errors": "^2.0.0",
     "p-map": "^6.0.0",
     "zod": "^3.22.4"
   },
@@ -36,6 +37,7 @@
     "@apidevtools/swagger-parser": "^10.1.0",
     "@dexaai/eslint-config": "^0.4.0",
     "@trivago/prettier-plugin-sort-imports": "^4.2.1",
+    "@types/http-errors": "^2.0.4",
     "@types/node": "^20.9.0",
     "del-cli": "^5.1.0",
     "eslint": "^8.53.0",

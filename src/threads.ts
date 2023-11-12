@@ -1,9 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import pMap from 'p-map'
 
 import * as routes from './generated/oai-routes'
-import * as utils from './utils'
-import { prisma } from './db'
+import * as utils from './lib/utils'
+import { createThread } from './lib/create-thread'
+import { prisma } from './lib/db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -11,43 +11,7 @@ app.openapi(routes.createThread, async (c) => {
   const body = c.req.valid('json')
   console.log('createThread', { body })
 
-  const { messages, ...data } = utils.convertOAIToPrisma(body)
-
-  const thread = await prisma.thread.create({
-    data
-  })
-
-  await pMap(
-    messages,
-    async (message) => {
-      const { content, ...data } = utils.convertOAIToPrisma(message)
-
-      if (data.file_ids && data.file_ids.length > 10) {
-        c.status(400)
-        c.text('Too many files')
-        throw new Error('Too many files')
-      }
-
-      await prisma.message.create({
-        data: {
-          ...data,
-          content: [
-            {
-              type: 'text',
-              text: {
-                value: content,
-                annotations: []
-              }
-            }
-          ],
-          thread_id: thread.id
-        }
-      })
-    },
-    {
-      concurrency: 8
-    }
-  )
+  const { thread } = await createThread(body)
 
   // TODO: this cast shouldn't be necessary
   return c.jsonT(utils.convertPrismaToOAI(thread) as any)

@@ -1,6 +1,6 @@
 import type { JsonifiableObject } from 'type-fest'
 
-import type * as oai from './generated/oai'
+import type * as oai from '../generated/oai'
 
 declare global {
   /**

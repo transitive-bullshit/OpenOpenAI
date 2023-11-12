@@ -1,8 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
+import createError from 'http-errors'
 
 import * as routes from './generated/oai-routes'
-import * as utils from './utils'
-import { prisma } from './db'
+import * as utils from './lib/utils'
+import { prisma } from './lib/db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -31,9 +32,7 @@ app.openapi(routes.createMessage, async (c) => {
   console.log('createMessage', { thread_id, body })
 
   if (body.file_ids && body.file_ids.length > 10) {
-    c.status(400)
-    c.text('Too many files')
-    return {} as any
+    throw createError(400, 'Too many files')
   }
 
   const { content, ...data } = utils.convertOAIToPrisma(body)
@@ -54,7 +53,8 @@ app.openapi(routes.createMessage, async (c) => {
     }
   })
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  // TODO: this cast shouldn't be necessary
+  return c.jsonT(utils.convertPrismaToOAI(res) as any)
 })
 
 app.openapi(routes.getMessage, async (c) => {

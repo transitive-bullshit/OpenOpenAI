@@ -1,8 +1,8 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
 import * as routes from './generated/oai-routes'
-import * as utils from './utils'
-import { prisma } from './db'
+import * as utils from './lib/utils'
+import { prisma } from './lib/db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -66,6 +66,8 @@ app.openapi(routes.modifyRun, async (c) => {
     },
     data: utils.convertOAIToPrisma(body)
   })
+
+  // TODO: if `status` is changed, update the underlying async task accordingly
 
   // TODO: this cast shouldn't be necessary
   return c.jsonT(utils.convertPrismaToOAI(res) as any)
