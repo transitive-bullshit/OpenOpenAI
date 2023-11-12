@@ -31,13 +31,12 @@ app.openapi(routes.getAssistant, async (c) => {
   const { assistant_id } = c.req.valid('param')
   console.log('getAssistant', { assistant_id })
 
-  const res = await prisma.assistant.findUnique({
+  const res = await prisma.assistant.findUniqueOrThrow({
     where: {
       id: assistant_id
     }
   })
 
-  if (!res) return c.notFound() as any
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
 

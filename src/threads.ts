@@ -21,13 +21,13 @@ app.openapi(routes.getThread, async (c) => {
   const { thread_id } = c.req.valid('param')
   console.log('getThread', { thread_id })
 
-  const res = await prisma.thread.findUnique({
+  const res = await prisma.thread.findUniqueOrThrow({
     where: {
       id: thread_id
     }
   })
-
   if (!res) return c.notFound() as any
+
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
 

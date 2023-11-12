@@ -10,27 +10,21 @@ export type OAITypeToPrismaType<T extends Record<string, unknown>> = Simplify<
       | 'updated_at'
       | 'started_at'
       | 'cancelled_at'
+      | 'completed_at'
       | 'expires_at'
       | 'failed_at'
     > &
-      (T extends { created_at: number }
-        ? T & { created_at: Date }
-        : Omit<T, 'created_at'>) &
-      (T extends { updated_at: number }
-        ? T & { updated_at: Date }
-        : Omit<T, 'updated_at'>) &
-      (T extends { started_at: number }
-        ? T & { started_at: number }
-        : Omit<T, 'started_at'>) &
-      (T extends { cancelled_at: number }
-        ? T & { cancelled_at: number }
-        : Omit<T, 'cancelled_at'>) &
-      (T extends { expires_at: number }
-        ? T & { expires_at: number }
-        : Omit<T, 'expires_at'>) &
-      (T extends { failed_at: number }
-        ? T & { failed_at: number }
-        : Omit<T, 'failed_at'>)
+      (T extends { created_at: number } ? { created_at: Date } : unknown) &
+      (T extends { updated_at: number } ? { updated_at: Date } : unknown) &
+      (T extends { started_at?: number } ? { started_at?: Date } : unknown) &
+      (T extends { cancelled_at?: number }
+        ? { cancelled_at?: Date }
+        : unknown) &
+      (T extends { completed_at?: number }
+        ? { completed_at?: Date }
+        : unknown) &
+      (T extends { expires_at: number } ? { expires_at: Date } : unknown) &
+      (T extends { failed_at: number } ? { failed_at: Date } : unknown)
   >
 >
 
@@ -42,27 +36,21 @@ export type PrismaTypeToOAIType<T extends Record<string, unknown>> = Simplify<
       | 'updated_at'
       | 'started_at'
       | 'cancelled_at'
+      | 'completed_at'
       | 'expires_at'
       | 'failed_at'
     > &
-      (T extends { created_at: Date }
-        ? T & { created_at: number }
-        : Omit<T, 'created_at'>) &
-      (T extends { updated_at: Date }
-        ? T & { updated_at: number }
-        : Omit<T, 'updated_at'>) &
-      (T extends { started_at: Date }
-        ? T & { started_at: number }
-        : Omit<T, 'started_at'>) &
-      (T extends { cancelled_at: Date }
-        ? T & { cancelled_at: number }
-        : Omit<T, 'cancelled_at'>) &
-      (T extends { expires_at: Date }
-        ? T & { expires_at: number }
-        : Omit<T, 'expires_at'>) &
-      (T extends { failed_at: Date }
-        ? T & { failed_at: number }
-        : Omit<T, 'failed_at'>)
+      (T extends { created_at: Date } ? { created_at: number } : unknown) &
+      (T extends { updated_at: Date } ? { updated_at: number } : unknown) &
+      (T extends { started_at?: Date } ? { started_at?: number } : unknown) &
+      (T extends { cancelled_at?: Date }
+        ? { cancelled_at?: number }
+        : unknown) &
+      (T extends { completed_at?: Date }
+        ? { completed_at?: number }
+        : unknown) &
+      (T extends { expires_at: Date } ? { expires_at: number } : unknown) &
+      (T extends { failed_at: Date } ? { failed_at: number } : unknown)
   >
 >
 
@@ -70,20 +58,21 @@ export type RequiredNonNullableObject<T extends object> = {
   [P in keyof Required<T>]: NonNullable<T[P]>
 }
 
+const dateKeys = [
+  'created_at',
+  'updated_at',
+  'started_at',
+  'cancelled_at',
+  'completed_at',
+  'expires_at',
+  'failed_at'
+]
+
 export function convertPrismaToOAI<
   T extends Record<string, unknown>,
   U extends PrismaTypeToOAIType<T>
 >(obj: T): U {
   obj = removeUndefinedAndNullValues(obj)
-
-  const dateKeys = [
-    'created_at',
-    'updated_at',
-    'started_at',
-    'cancelled_at',
-    'expires_at',
-    'failed_at'
-  ]
 
   for (const key of dateKeys) {
     if (key in obj && obj[key] instanceof Date) {
@@ -99,15 +88,6 @@ export function convertOAIToPrisma<
   U extends OAITypeToPrismaType<T>
 >(obj: T): U {
   obj = removeUndefinedAndNullValues(obj)
-
-  const dateKeys = [
-    'created_at',
-    'updated_at',
-    'started_at',
-    'cancelled_at',
-    'expires_at',
-    'failed_at'
-  ]
 
   for (const key of dateKeys) {
     if (key in obj && obj[key]) {

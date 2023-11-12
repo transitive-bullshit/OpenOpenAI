@@ -30,6 +30,11 @@ ListMessagesParamsQueryClassSchema number causes issue with typings of all param
 
 - createFile
 - downloadFile
+- file to blob storage
+- handle async task queue underlying `run`
+- handle locking thread and messages
+- built-in retrieval tool
+- built-in interpreter tool
 
 ## Development
 

@@ -63,14 +63,13 @@ app.openapi(routes.getAssistantFile, async (c) => {
   const { assistant_id, file_id } = c.req.valid('param')
   console.log('getAssistantFile', { assistant_id, file_id })
 
-  const res = await prisma.assistantFile.findUnique({
+  const res = await prisma.assistantFile.findUniqueOrThrow({
     where: {
       id: file_id,
       assistant_id
     }
   })
 
-  if (!res) return c.notFound() as any
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
 

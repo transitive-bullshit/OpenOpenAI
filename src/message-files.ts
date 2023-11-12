@@ -21,20 +21,18 @@ app.openapi(routes.getMessageFile, async (c) => {
   const { thread_id, message_id, file_id } = c.req.valid('param')
   console.log('getMessageFile', { thread_id, message_id, file_id })
 
-  const message = await prisma.message.findUnique({
+  const message = await prisma.message.findUniqueOrThrow({
     where: {
       id: message_id
     }
   })
-  if (!message) return c.notFound() as any
   if (message.thread_id !== thread_id) return c.notFound() as any
 
-  const messageFile = await prisma.messageFile.findUnique({
+  const messageFile = await prisma.messageFile.findUniqueOrThrow({
     where: {
       id: file_id
     }
   })
-  if (!messageFile) return c.notFound() as any
   if (messageFile.message_id !== message_id) return c.notFound() as any
 
   return c.jsonT(utils.convertPrismaToOAI(messageFile))

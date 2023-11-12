@@ -67,13 +67,13 @@ app.openapi(routes.retrieveFile, async (c) => {
   const { file_id } = c.req.valid('param')
   console.log('retrieveFile', { file_id })
 
-  const res = await prisma.file.findUnique({
+  const res = await prisma.file.findUniqueOrThrow({
     where: {
       id: file_id
     }
   })
-
   if (!res) return c.notFound() as any
+
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
 

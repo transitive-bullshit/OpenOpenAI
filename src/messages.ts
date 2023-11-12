@@ -61,14 +61,13 @@ app.openapi(routes.getMessage, async (c) => {
   const { thread_id, message_id } = c.req.valid('param')
   console.log('getMessage', { thread_id, message_id })
 
-  const res = await prisma.message.findUnique({
+  const res = await prisma.message.findUniqueOrThrow({
     where: {
       id: message_id,
       thread_id
     }
   })
 
-  if (!res) return c.notFound() as any
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
 

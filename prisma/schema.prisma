@@ -127,9 +127,9 @@ model Run {
   /// [Metadata]
   metadata        Json?
   /// [LastError]
-  last_error      Json
+  last_error      Json?
   /// [RequiredAction]
-  required_action Json
+  required_action Json?
   /// [Tool]
   tools           Json[]    @default([])
   status          RunStatus
@@ -158,9 +158,9 @@ model RunStep {
   /// [Metadata]
   metadata     Json?
   /// [LastError]
-  last_error   Json
+  last_error   Json?
   /// [StepDetails]
-  step_details Json
+  step_details Json?
   status       RunStepStatus
   type         RunStepType
   completed_at DateTime?
@@ -176,6 +176,8 @@ model RunStep {
   thread    Thread    @relation(fields: [thread_id], references: [id])
   assistant Assistant @relation(fields: [assistant_id], references: [id])
   run       Run       @relation(fields: [run_id], references: [id])
+
+  @@index([run_id, type])
 }
 
 enum FileStatus {

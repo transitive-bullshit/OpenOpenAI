@@ -22,7 +22,7 @@ app.openapi(routes.getRunStep, async (c) => {
   const { thread_id, run_id, step_id } = c.req.valid('param')
   console.log('getRunStep', { thread_id, run_id, step_id })
 
-  const res = await prisma.runStep.findUnique({
+  const res = await prisma.runStep.findUniqueOrThrow({
     where: {
       id: step_id,
       thread_id,
@@ -30,7 +30,6 @@ app.openapi(routes.getRunStep, async (c) => {
     }
   })
 
-  if (!res) return c.notFound() as any
   return c.jsonT(utils.convertPrismaToOAI(res) as any)
 })
 
