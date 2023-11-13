@@ -80,11 +80,11 @@ export const worker = new Worker<JobData, JobResult>(
     }
 
     try {
-      const now = new Date()
+      const startedAt = new Date()
 
       await prisma.run.update({
         where: { id: runId },
-        data: { status: 'in_progress', started_at: now }
+        data: { status: 'in_progress', started_at: startedAt }
       })
 
       const messages = await prisma.message.findMany({
@@ -96,61 +96,118 @@ export const worker = new Worker<JobData, JobResult>(
         }
       })
 
-      const lastMessage = messages[messages.length - 1]
-      if (!lastMessage) {
-        throw new Error(`Invalid run "${runId}": no messages`)
-      }
+      // const lastMessage = messages[messages.length - 1]
+      // if (!lastMessage) {
+      //   throw new Error(`Invalid run "${runId}": no messages`)
+      // }
 
-      if (lastMessage.role !== 'assistant') {
-        throw new Error(
-          `Invalid run "${runId}": last message must be an "assistant" message`
-        )
-      }
+      // if (lastMessage.role !== 'assistant') {
+      //   throw new Error(
+      //     `Invalid run "${runId}": last message must be an "assistant" message`
+      //   )
+      // }
 
-      const chatMessages = messages.map((msg) => {
-        switch (msg.role) {
-          case 'system':
-            return Msg.system(
-              msg.content.find((c) => c.type === 'text')?.text?.value!,
-              { cleanContent: false }
-            )
+      // TODO: maybe convert to a for loop? need to keep looping until we
+      // process all messages
 
-          case 'assistant':
-            return Msg.assistant(
-              msg.content.find((c) => c.type === 'text')?.text?.value!,
-              { cleanContent: false }
-            )
+      const chatMessages = messages
+        .map((msg) => {
+          switch (msg.role) {
+            case 'system':
+              return [
+                Msg.system(
+                  msg.content.find((c) => c.type === 'text')?.text?.value!,
+                  { cleanContent: false }
+                )
+              ]
 
-          case 'user':
-            return Msg.user(
-              msg.content.find((c) => c.type === 'text')?.text?.value!,
-              { cleanContent: false }
-            )
+            case 'assistant':
+              // TODO: handle funcCall and toolCall messages
+              throw new Error('TODO: handle funcCall and toolCall messages')
 
-          case 'function': {
-            if (!msg.run_id) throw new Error('Invalid message: missing run_id')
-            const possibleRunSteps = runSteps.filter(
-              (runStep) =>
-                runStep.type === 'tool_calls' && runStep.status === 'completed'
-            )
+              return [
+                Msg.assistant(
+                  msg.content.find((c) => c.type === 'text')?.text?.value!,
+                  { cleanContent: false }
+                )
+              ]
 
-            // TODO
-            return Msg.funcResult(msg.content[0].text?.value!)
+            case 'user':
+              return [
+                Msg.user(
+                  msg.content.find((c) => c.type === 'text')?.text?.value!,
+                  { cleanContent: false }
+                )
+              ]
+
+            case 'function': {
+              if (!msg.run_step_id)
+                throw new Error(
+                  `Invalid "${msg.role}" message: missing "run_step_id"`
+                )
+
+              const runStep = runSteps.find(
+                (runStep) => runStep.id === msg.run_step_id
+              )
+              if (!runStep)
+                throw new Error(
+                  `Invalid "${msg.role}" message: invalid "run_step_id"`
+                )
+              if (runStep.type !== 'tool_calls')
+                throw new Error(
+                  `Invalid "${msg.role}" message: invalid run step`
+                )
+
+              const toolCall = runStep.step_details?.tool_calls?.find(
+                (tc) => tc.type === 'function'
+              )
+              if (!toolCall?.function) throw new Error('Invalid tool call')
+
+              return [
+                Msg.funcResult(
+                  toolCall.function?.output,
+                  toolCall.function.name
+                )
+              ]
+            }
+
+            case 'tool': {
+              if (!msg.run_step_id)
+                throw new Error(
+                  `Invalid "${msg.role}" message: missing "run_step_id"`
+                )
+
+              const runStep = runSteps.find(
+                (runStep) => runStep.id === msg.run_step_id
+              )
+              if (!runStep)
+                throw new Error(
+                  `Invalid "${msg.role}" message: invalid "run_step_id"`
+                )
+              if (runStep.type !== 'tool_calls')
+                throw new Error(
+                  `Invalid "${msg.role}" message: invalid run step`
+                )
+
+              const toolCall = runStep.step_details?.tool_calls?.find(
+                (tc) => tc.type === 'function'
+              )
+              if (!toolCall?.function) throw new Error('Invalid tool call')
+
+              return [Msg.toolResult(toolCall.function?.output, toolCall.id)]
+            }
+
+            default:
+              throw new Error(`Invalid message role "${msg.role}"`)
           }
-
-          case 'tool':
-            // TODO
-            return Msg.toolResult(msg.content[0].text?.value!)
-
-          default:
-            throw new Error(`Invalid message role "${msg.role}"`)
-        }
-      })
+        })
+        .flat()
 
       const chatModel = new ChatModel({
         client: createOpenAIClient(),
         params: {
-          model: assistant.model
+          model: assistant.model,
+          tools: assistant.tools
         }
       })
 
@@ -162,6 +219,57 @@ export const worker = new Worker<JobData, JobResult>(
 
       const res = await chatModel.run({ messages: assistantChatMessages })
       const { message } = res
+
+      if (message.role !== 'assistant') {
+        throw new Error(
+          `Unexpected error for run "${runId}": last message should be an "assistant" message`
+        )
+      }
+
+      const completedAt = new Date()
+
+      if (Msg.isFuncCall(message)) {
+        // TODO: this should never happen since we're using tools, not functions
+      } else if (Msg.isToolCall(message)) {
+        for (const toolCall of message.tool_calls) {
+          // TODO
+        }
+      } else {
+        const newMessage = await prisma.message.create({
+          data: {
+            content: {
+              type: 'text',
+              text: {
+                value: message.content!,
+                annotations: []
+              }
+            },
+            role: message.role,
+            assistant_id: assistant.id,
+            thread_id: thread.id,
+            run_id: run.id
+          }
+        })
+
+        const runStep = await prisma.runStep.create({
+          data: {
+            type: 'message_creation',
+            status: 'completed',
+            completed_at: completedAt,
+            assistant_id: assistant.id,
+            thread_id: thread.id,
+            run_id: run.id,
+            step_details: {
+              type: 'message_creation',
+              message_creation: {
+                message_id: newMessage.id
+              }
+            }
+          }
+        })
+
+        runSteps.push(runStep)
+      }
 
       // TODO
       throw new Error('not yet implemented')

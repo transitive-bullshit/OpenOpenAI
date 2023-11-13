@@ -207,7 +207,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
             // toolCall.code_interpreter?.outputs
             throw createHttpError(
               400,
-              'Invalid third-party code_interpreter tool calls are not supported at this time'
+              'Error third-party code_interpreter tool calls are not supported at this time'
             )
 
           case 'function':
@@ -218,7 +218,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
             // TODO
             throw createHttpError(
               400,
-              'Invalid third-party retrieval tool calls are not supported at this time'
+              'Error third-party retrieval tool calls are not supported at this time'
             )
 
           default:
@@ -233,6 +233,9 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
         where: { id: runStep.id },
         data: runStepUpdate
       })
+
+      // TODO: do we create a message object here? or is it implicitly stored in a
+      // RunStep?...
 
       await prisma.run.update({
         where: { id: run.id },

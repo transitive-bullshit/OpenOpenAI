@@ -93,7 +93,10 @@ model Message {
   role         Role
   assistant_id String?
   thread_id    String
+  // if this message was created during a run
   run_id       String?
+  // if this message was created during a run
+  run_step_id  String?
   /// [MessageObject]
   object       String   @default("thread.message")
 
@@ -170,6 +173,8 @@ model RunStep {
   assistant_id String
   thread_id    String
   run_id       String
+  // if this step created a message
+  message_id   String?
   /// [RunStepObject]
   object       String        @default("thread.run.step")
 
