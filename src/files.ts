@@ -97,6 +97,7 @@ app.openapi(routes.downloadFile, async (c) => {
   })
 
   const object = await storage.getObject(res.filename)
+  // TODO: what encoding should we use here? it's not specified by the spec
   const body = await object.Body?.transformToString()
   if (!body) {
     throw createHttpError(500, 'Failed to retrieve file')

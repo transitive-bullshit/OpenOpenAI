@@ -8,10 +8,12 @@ import {
   S3Client
 } from '@aws-sdk/client-s3'
 
+import * as config from './config'
+
 // This storage client is designed to work with any S3-compatible storage provider.
 // For Cloudflare R2, see https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js-v3/
 
-export const bucket = process.env.S3_BUCKET!
+const bucket = config.storage.bucket
 
 export const S3 = new S3Client({
   region: process.env.S3_REGION ?? 'auto',

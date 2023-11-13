@@ -2,9 +2,11 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import createHttpError from 'http-errors'
 
 import * as routes from './generated/oai-routes'
+import * as config from './lib/config'
 import * as utils from './lib/utils'
 import { createThread } from './lib/create-thread'
 import { prisma } from './lib/db'
+import { queue } from './lib/queue'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -14,7 +16,7 @@ app.openapi(routes.listRuns, async (c) => {
   console.log('listRuns', { thread_id, query })
 
   const params = utils.getPrismaFindManyParams(query)
-  const res = await prisma.run.findMany(params)
+  const res = await prisma.run.findMany(params)!
 
   // TODO: figure out why the types aren't working here
   return c.jsonT(utils.getPaginatedObject(res, params) as any)
@@ -41,8 +43,14 @@ app.openapi(routes.createThreadAndRun, async (c) => {
     }
   })
 
-  // TODO: kick off async task
-  c.status(501)
+  // Kick off async task
+  await queue.add(
+    config.queue.threadRunJobName,
+    { runId: run.id },
+    {
+      jobId: run.id
+    }
+  )
 
   return c.jsonT(utils.convertPrismaToOAI(run))
 })
@@ -52,23 +60,32 @@ app.openapi(routes.createRun, async (c) => {
   const body = c.req.valid('json')
   console.log('createRun', { thread_id, body })
 
+  // Ensure the assistant exists
   await prisma.assistant.findUniqueOrThrow({
-    where: {
-      id: body.assistant_id
-    }
+    where: { id: body.assistant_id }
+  })
+
+  // Ensure the thread exists
+  await prisma.thread.findUniqueOrThrow({
+    where: { id: thread_id }
   })
 
   const run = await prisma.run.create({
     data: {
       ...utils.convertOAIToPrisma(body),
-      thread_id: thread_id,
-      // TODO: is this the correct default status?
+      thread_id,
       status: 'queued' as const
     }
   })
 
-  // TODO: kick off async task
-  c.status(501)
+  // Kick off async task
+  await queue.add(
+    config.queue.threadRunJobName,
+    { runId: run.id },
+    {
+      jobId: run.id
+    }
+  )
 
   return c.jsonT(utils.convertPrismaToOAI(run))
 })
@@ -77,14 +94,15 @@ app.openapi(routes.getRun, async (c) => {
   const { thread_id, run_id } = c.req.valid('param')
   console.log('getRun', { thread_id, run_id })
 
-  const res = await prisma.run.findUniqueOrThrow({
+  const run = await prisma.run.findUniqueOrThrow({
     where: {
       id: run_id,
       thread_id
     }
   })
+  if (!run) return c.notFound() as any
 
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(run))
 })
 
 app.openapi(routes.modifyRun, async (c) => {
@@ -92,19 +110,16 @@ app.openapi(routes.modifyRun, async (c) => {
   const body = c.req.valid('json')
   console.log('modifyRun', { thread_id, run_id, body })
 
-  const res = await prisma.run.update({
+  const run = await prisma.run.update({
     where: {
       id: run_id,
       thread_id
     },
     data: utils.convertOAIToPrisma(body)
   })
+  if (!run) return c.notFound() as any
 
-  // TODO: if `status` is changed, update the underlying async task accordingly
-  c.status(501)
-
-  // TODO: this cast shouldn't be necessary
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(run))
 })
 
 app.openapi(routes.submitToolOuputsToRun, async (c) => {
@@ -118,6 +133,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
       thread_id
     }
   })
+  if (!run) return c.notFound() as any
 
   const runStep = await prisma.runStep.findUniqueOrThrow({
     // @ts-expect-error this shouldn't be complaining
@@ -208,7 +224,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
         }
       }
 
-      runStep.status = 'in_progress'
+      runStep.status = 'completed'
 
       const { id, object, created_at, ...runStepUpdate } = runStep as any
       await prisma.runStep.update({
@@ -216,21 +232,17 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
         data: runStepUpdate
       })
 
-      // TODO: kick off runStep
-      c.status(501)
+      await prisma.run.update({
+        where: { id: run.id },
+        data: { status: 'queued' }
+      })
 
-      // TODO: validate body.tool_outputs against run.tools
-      // const runStep = await prisma.runStep.update()
-      // if (!runStep) return c.notFound() as any
       break
     }
 
     default:
       throw createHttpError(500, 'Invalid tool call type')
   }
-
-  // TODO
-  c.status(501)
 
   return c.jsonT({ run_id, thread_id })
 })
@@ -239,7 +251,7 @@ app.openapi(routes.cancelRun, async (c) => {
   const { thread_id, run_id } = c.req.valid('param')
   console.log('cancelRun', { thread_id, run_id })
 
-  const res = await prisma.run.update({
+  let run = await prisma.run.update({
     where: {
       id: run_id,
       thread_id
@@ -249,14 +261,25 @@ app.openapi(routes.cancelRun, async (c) => {
       cancelled_at: new Date()
     }
   })
+  if (!run) return c.notFound() as any
 
-  // TODO: actual cancellation => `cancelled`
-  // TODO
-  c.status(501)
+  const res = await queue.remove(run_id)
+  if (res === 1) {
+    run = await prisma.run.update({
+      where: {
+        id: run_id,
+        thread_id
+      },
+      data: {
+        status: 'cancelled'
+      }
+    })
+    if (!run) return c.notFound() as any
+  }
 
   // TODO: assistant_id and run_id may not exist here, but the output
   // types are too strict
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(run))
 })
 
 export default app

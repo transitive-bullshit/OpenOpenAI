@@ -12,9 +12,9 @@ app.openapi(routes.createThread, async (c) => {
   console.log('createThread', { body })
 
   const { thread } = await createThread(body)
+  if (!thread) return c.notFound() as any
 
-  // TODO: this cast shouldn't be necessary
-  return c.jsonT(utils.convertPrismaToOAI(thread) as any)
+  return c.jsonT(utils.convertPrismaToOAI(thread))
 })
 
 app.openapi(routes.getThread, async (c) => {
@@ -42,9 +42,9 @@ app.openapi(routes.modifyThread, async (c) => {
     },
     data: utils.convertOAIToPrisma(body)
   })
+  if (!res) return c.notFound() as any
 
-  // TODO: this cast shouldn't be necessary
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.deleteThread, async (c) => {
