@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { sha256 } from 'crypto-hash'
 import { fileTypeFromBuffer } from 'file-type'
+import createHttpError from 'http-errors'
 
 import * as routes from './generated/oai-routes'
 import * as storage from './lib/storage'
@@ -89,9 +90,19 @@ app.openapi(routes.downloadFile, async (c) => {
   const { file_id } = c.req.valid('param')
   console.log('downloadFile', { file_id })
 
-  // TODO
-  c.status(501)
-  return null as any
+  const res = await prisma.file.findUniqueOrThrow({
+    where: {
+      id: file_id
+    }
+  })
+
+  const object = await storage.getObject(res.filename)
+  const body = await object.Body?.transformToString()
+  if (!body) {
+    throw createHttpError(500, 'Failed to retrieve file')
+  }
+
+  return c.json(body)
 })
 
 export default app
