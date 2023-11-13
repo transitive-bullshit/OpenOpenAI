@@ -3,6 +3,7 @@
   "extends": ["@dexaai/eslint-config", "@dexaai/eslint-config/node"],
   "ignorePatterns": ["node_modules", "dist", ".next"],
   "rules": {
+    "no-process-env": "off",
     "no-console": "off",
     "import/order": "off"
   }

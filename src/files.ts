@@ -1,6 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
+import { sha256 } from 'crypto-hash'
+import { fileTypeFromBuffer } from 'file-type'
 
 import * as routes from './generated/oai-routes'
+import * as storage from './lib/storage'
 import * as utils from './lib/utils'
 import { prisma } from './lib/db'
 
@@ -29,15 +32,20 @@ app.openapi(routes.createFile, async (c) => {
 
   const { file, purpose } = body
 
-  // TODO: process file and upload to blob store
-  // TODO: extract file type and infer name
-  // TODO: correct byte length
+  const fileAsBuffer = Buffer.from(file, 'binary')
+  const fileType = await fileTypeFromBuffer(fileAsBuffer)
+  const fileName = `${sha256(file)}${fileType?.ext ? `.${fileType.ext}` : ''}`
+  const contentType = fileType?.mime || 'application/octet-stream'
+
+  await storage.putObject(fileName, fileAsBuffer, {
+    ContentType: contentType
+  })
 
   const res = await prisma.file.create({
     data: {
-      bytes: file.length,
-      filename: 'TODO',
+      filename: fileName,
       status: 'uploaded',
+      bytes: fileAsBuffer.byteLength,
       purpose
     }
   })
