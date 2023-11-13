@@ -5,7 +5,7 @@
     "target": "es2020",
     "lib": ["ESNext", "DOM"],
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "jsx": "preserve",
     "allowJs": true,
     "skipLibCheck": true,

@@ -135,11 +135,13 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
   })
   if (!run) return c.notFound() as any
 
-  const runStep = await prisma.runStep.findUniqueOrThrow({
-    // @ts-expect-error this shouldn't be complaining
+  const runStep = await prisma.runStep.findFirstOrThrow({
     where: {
       run_id,
       type: 'tool_calls' as const
+    },
+    orderBy: {
+      created_at: 'desc'
     }
   })
   if (!runStep) return c.notFound() as any

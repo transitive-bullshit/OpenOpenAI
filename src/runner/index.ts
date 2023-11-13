@@ -1,3 +1,5 @@
+import { ChatModel, createOpenAIClient } from '@dexaai/dexter/model'
+import { Msg, type Prompt } from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
 import { asyncExitHook } from 'exit-hook'
 
@@ -55,7 +57,12 @@ export const worker = new Worker<JobData, JobResult>(
       return checkRunStatus(run)
     }
 
-    const { run_steps: runSteps, ...run } = await prisma.run.findUniqueOrThrow({
+    const {
+      run_steps: runSteps,
+      assistant,
+      thread,
+      ...run
+    } = await prisma.run.findUniqueOrThrow({
       where: { id: runId },
       include: { thread: true, assistant: true, run_steps: true }
     })
@@ -64,11 +71,11 @@ export const worker = new Worker<JobData, JobResult>(
       return jobErrorResult!
     }
 
-    if (!run.thread) {
+    if (!thread) {
       throw new Error('Invalid run: thread does not exist')
     }
 
-    if (!run.assistant) {
+    if (!assistant) {
       throw new Error('Invalid run: assistant does not exist')
     }
 
@@ -82,7 +89,7 @@ export const worker = new Worker<JobData, JobResult>(
 
       const messages = await prisma.message.findMany({
         where: {
-          thread_id: run.thread.id
+          thread_id: thread.id
         },
         orderBy: {
           created_at: 'asc'
@@ -99,6 +106,62 @@ export const worker = new Worker<JobData, JobResult>(
           `Invalid run "${runId}": last message must be an "assistant" message`
         )
       }
+
+      const chatMessages = messages.map((msg) => {
+        switch (msg.role) {
+          case 'system':
+            return Msg.system(
+              msg.content.find((c) => c.type === 'text')?.text?.value!,
+              { cleanContent: false }
+            )
+
+          case 'assistant':
+            return Msg.assistant(
+              msg.content.find((c) => c.type === 'text')?.text?.value!,
+              { cleanContent: false }
+            )
+
+          case 'user':
+            return Msg.user(
+              msg.content.find((c) => c.type === 'text')?.text?.value!,
+              { cleanContent: false }
+            )
+
+          case 'function': {
+            if (!msg.run_id) throw new Error('Invalid message: missing run_id')
+            const possibleRunSteps = runSteps.filter(
+              (runStep) =>
+                runStep.type === 'tool_calls' && runStep.status === 'completed'
+            )
+
+            // TODO
+            return Msg.funcResult(msg.content[0].text?.value!)
+          }
+
+          case 'tool':
+            // TODO
+            return Msg.toolResult(msg.content[0].text?.value!)
+
+          default:
+            throw new Error(`Invalid message role "${msg.role}"`)
+        }
+      })
+
+      const chatModel = new ChatModel({
+        client: createOpenAIClient(),
+        params: {
+          model: assistant.model
+        }
+      })
+
+      const assistantChatMessages = (
+        assistant.instructions
+          ? [Msg.system(assistant.instructions)]
+          : ([] as Prompt.Msg[])
+      ).concat(chatMessages)
+
+      const res = await chatModel.run({ messages: assistantChatMessages })
+      const { message } = res
 
       // TODO
       throw new Error('not yet implemented')
