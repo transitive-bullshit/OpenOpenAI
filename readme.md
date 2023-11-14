@@ -20,17 +20,17 @@
 
 **This project is a self-hosted version of OpenAI's new stateful Assistants API.** 💪
 
-All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official OpenAI API and your custom API simply by changing the `baseUrl`. 🤯
+All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official API and your custom API simply by changing the `baseUrl`. 🤯
 
 This means that all API parameters, responses, and types are wire-compatible with the official OpenAI API, and the fact that they're auto-generated means that it will be relatively easy to keep them in sync over time.
 
-This unlocks all sorts of useful applications... including:
+This unlocks all sorts of useful possibilities... including:
 
 - Using the OpenAI Assistants API with **custom models**
-- Full customization over the built-in retrieval tool
+- **Fully customizable RAG** via the built-in retrieval tool
 - Using a **custom code interpreter** like [open-interpreter](https://github.com/KillianLucas/open-interpreter)
 - **Self-hosting / on-premise** deployments of OpenAI-compatible Assistants
-- Full control over assistant **evals**
+- Full control over **assistant evals**
 - Developing & testing GPTs in a fully **sandboxed environment**
 - Sandboxed testing of **custom Actions** before deploying to the OpenAI "GPT Store"
 
