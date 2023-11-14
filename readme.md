@@ -124,7 +124,7 @@ npx tsx dist/runner
 
 ### E2E Example
 
-This will run an end-to-end assistant example, completion with custom tool invocation, using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
+This will run an end-to-end assistant example, complete with custom tool invocation, using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
 
 ```bash
 npx tsx e2e
