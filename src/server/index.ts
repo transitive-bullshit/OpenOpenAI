@@ -1,9 +1,8 @@
-import { promisify } from 'node:util'
-
 import { serve } from '@hono/node-server'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import 'dotenv/config'
 import { asyncExitHook } from 'exit-hook'
+import { signalsByNumber } from 'human-signals'
 
 import * as config from '~/lib/config'
 import { prisma } from '~/lib/db'
@@ -64,7 +63,12 @@ app.doc('/openapi', {
 
 app.showRoutes()
 
-const server = serve(app)
+const server = serve({
+  fetch: app.fetch,
+  port: config.port
+})
+
+console.log(`Server listening on port ${config.port}`)
 
 if (config.queue.startRunner) {
   await import('~/runner/index')
@@ -72,14 +76,20 @@ if (config.queue.startRunner) {
 
 asyncExitHook(
   async (signal: number) => {
-    console.log(`Received ${signal}; closing server...`)
+    console.log(
+      `Received signal ${
+        signalsByNumber[signal - 128]?.name ?? signal - 128
+      }; closing server...`
+    )
 
     // NOTE: the order of these calls is important for edge cases
-    await promisify(server.close)()
+    // TODO: awaiting server.close seems to cause errors
+    // await promisify(server.close)()
+    server.close()
     await queue.close()
     await prisma.$disconnect()
   },
   {
-    wait: 5000
+    wait: config.processGracefulExitWaitTimeMs
   }
 )

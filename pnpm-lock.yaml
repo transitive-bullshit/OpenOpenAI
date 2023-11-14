@@ -41,6 +41,9 @@ dependencies:
   http-errors:
     specifier: ^2.0.0
     version: 2.0.0
+  human-signals:
+    specifier: ^6.0.0
+    version: 6.0.0
   p-map:
     specifier: ^6.0.0
     version: 6.0.0
@@ -112,6 +115,9 @@ devDependencies:
   quicktype-core:
     specifier: ^23.0.77
     version: 23.0.77
+  resolve-tspaths:
+    specifier: ^0.8.17
+    version: 0.8.17(typescript@5.2.2)
   tsx:
     specifier: ^4.0.0
     version: 4.0.0
@@ -2529,6 +2535,11 @@ packages:
       string-width: 4.2.3
     dev: true
 
+  /ansi-colors@4.1.3:
+    resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
+    engines: {node: '>=6'}
+    dev: true
+
   /ansi-escapes@3.2.0:
     resolution: {integrity: sha512-cBhpre4ma+U0T1oM5fXg7Dy1Jw7zzwv7lt/GoCpr+hDQJoYnKVPLL4dCvSEFMmQurOQvSrwT7SL/DAlhBI97RQ==}
     engines: {node: '>=4'}
@@ -4199,6 +4210,17 @@ packages:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
     dev: true
 
+  /fast-glob@3.3.1:
+    resolution: {integrity: sha512-kNFPyjhh5cKjrUltxs+wFx+ZkbRaxxmZ+X0ZU31SOsxCEtP9VPgtq2teZw1DebupL5GmDaNQ6yKMMVcM41iqDg==}
+    engines: {node: '>=8.6.0'}
+    dependencies:
+      '@nodelib/fs.stat': 2.0.5
+      '@nodelib/fs.walk': 1.2.8
+      glob-parent: 5.1.2
+      merge2: 1.4.1
+      micromatch: 4.0.5
+    dev: true
+
   /fast-glob@3.3.2:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
     engines: {node: '>=8.6.0'}
@@ -4709,6 +4731,11 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
     dev: true
+
+  /human-signals@6.0.0:
+    resolution: {integrity: sha512-E8FEGCQpCoCHSPDn+iWUL2t+XIp1cUGFCiIWNmLuRszJunXrnXbbH34UeLlDQmLVZhyLmRZS53fwVD1Htvn1QA==}
+    engines: {node: '>=18.18.0'}
+    dev: false
 
   /humanize-ms@1.2.1:
     resolution: {integrity: sha512-Fl70vYtsAFb/C06PTS9dZBo7ihau+Tu/DNCk/OyHhea07S+aeMWpFFkUaXRa8fI+ScZbEI8dfSxwY7gxZ9SAVQ==}
@@ -6872,6 +6899,18 @@ packages:
 
   /resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
+    dev: true
+
+  /resolve-tspaths@0.8.17(typescript@5.2.2):
+    resolution: {integrity: sha512-oM+e7uUEd23NL39EpBrxQfyzRy8UP11e3jqtj7WUxi6B/SWlIvfgXqUjgzLBz2+QjZ7aWkX47ZsJnCgH7wVpFQ==}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=3.0.3'
+    dependencies:
+      ansi-colors: 4.1.3
+      commander: 11.1.0
+      fast-glob: 3.3.1
+      typescript: 5.2.2
     dev: true
 
   /resolve@1.22.8:

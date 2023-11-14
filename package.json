@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.dist.json",
+    "postbuild": "resolve-tspaths --project tsconfig.dist.json",
     "prebuild": "run-s clean && prisma generate",
     "clean": "del dist",
     "dev": "tsc --watch",
@@ -37,6 +38,7 @@
     "file-type": "^18.7.0",
     "hono": "^3.9.2",
     "http-errors": "^2.0.0",
+    "human-signals": "^6.0.0",
     "p-map": "^6.0.0",
     "zod": "^3.22.4"
   },
@@ -62,6 +64,7 @@
     "prisma": "^5.5.2",
     "prisma-json-types-generator": "^3.0.3",
     "quicktype-core": "^23.0.77",
+    "resolve-tspaths": "^0.8.17",
     "tsx": "^4.0.0",
     "type-fest": "^4.7.1",
     "typescript": "^5.2.2",

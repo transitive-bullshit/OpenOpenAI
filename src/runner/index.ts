@@ -1,6 +1,7 @@
 import { Msg, type Prompt, extractJsonObject } from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
 import { asyncExitHook } from 'exit-hook'
+import { signalsByNumber } from 'human-signals'
 import pMap from 'p-map'
 
 import * as config from '~/lib/config'
@@ -450,22 +451,30 @@ export const worker = new Worker<JobData, JobResult>(
     } while (run.status === 'in_progress')
   },
   {
-    connection: config.queue.RedisConfig,
+    connection: config.queue.redisConfig,
     // TODO: for development, set this to 1
     concurrency: config.queue.concurrency,
     stalledInterval: config.queue.stalledInterval
   }
 )
 
+console.log(
+  `Runner started for queue "${config.queue.name}" listening for "${config.queue.threadRunJobName}" jobs`
+)
+
 asyncExitHook(
   async (signal: number) => {
-    console.log(`Received ${signal}; closing runner...`)
+    console.log(
+      `Received ${
+        signalsByNumber[signal - 128]?.name ?? signal - 128
+      }; closing runner...`
+    )
 
     // NOTE: the order of these calls is important for edge cases
     await worker.close()
     await prisma.$disconnect()
   },
   {
-    wait: 5000
+    wait: config.processGracefulExitWaitTimeMs
   }
 )

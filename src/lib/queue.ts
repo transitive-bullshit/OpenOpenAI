@@ -5,7 +5,7 @@ import type { Run, RunStep } from './db'
 import type { JobData, JobResult } from './types'
 
 export const queue = new Queue<JobData, JobResult>(config.queue.name, {
-  connection: config.queue.RedisConfig
+  connection: config.queue.redisConfig
 })
 
 export function getJobId(run: Run, runStep?: RunStep) {

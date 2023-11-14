@@ -26,9 +26,9 @@
     "sourceMap": true,
     "noEmit": false,
     "outDir": "dist",
-    "baseUrl": ".",
+    "baseUrl": "src/",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./*"]
     }
   }
 }
