@@ -1,4 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
+import { Prisma } from '@prisma/client'
 import createHttpError from 'http-errors'
 
 import * as routes from './generated/oai-routes'
@@ -6,7 +7,7 @@ import * as config from './lib/config'
 import * as utils from './lib/utils'
 import { createThread } from './lib/create-thread'
 import { prisma } from './lib/db'
-import { queue } from './lib/queue'
+import { getJobId, queue } from './lib/queue'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -50,7 +51,7 @@ app.openapi(routes.createThreadAndRun, async (c) => {
     config.queue.threadRunJobName,
     { runId: run.id },
     {
-      jobId: run.id
+      jobId: getJobId(run)
     }
   )
 
@@ -87,7 +88,7 @@ app.openapi(routes.createRun, async (c) => {
     config.queue.threadRunJobName,
     { runId: run.id },
     {
-      jobId: run.id
+      jobId: getJobId(run)
     }
   )
 
@@ -131,7 +132,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
   const body = c.req.valid('json')
   console.log('submitToolOuputsToRun', { thread_id, run_id, body })
 
-  const run = await prisma.run.findUniqueOrThrow({
+  let run = await prisma.run.findUniqueOrThrow({
     where: {
       id: run_id,
       thread_id
@@ -139,7 +140,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
   })
   if (!run) return c.notFound() as any
 
-  const runStep = await prisma.runStep.findFirstOrThrow({
+  let runStep = await prisma.runStep.findFirstOrThrow({
     where: {
       run_id,
       type: 'tool_calls' as const
@@ -247,22 +248,28 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
         }
       }
 
-      // TODO: update corresponding ToolCall
+      // TODO: update corresponding ToolCall?
       runStep.status = 'completed'
 
       const { id, object, created_at, ...runStepUpdate } = runStep as any
-      await prisma.runStep.update({
+      runStep = await prisma.runStep.update({
         where: { id: runStep.id },
         data: runStepUpdate
       })
 
-      await prisma.run.update({
+      run = await prisma.run.update({
         where: { id: run.id },
-        data: { status: 'queued' }
+        data: { status: 'queued', required_action: Prisma.JsonNull }
       })
 
-      // TODO: should we re-add to task queue, with a new jobId?
-
+      // Resume async task
+      await queue.add(
+        config.queue.threadRunJobName,
+        { runId: run.id },
+        {
+          jobId: getJobId(run, runStep)
+        }
+      )
       break
     }
 
@@ -285,22 +292,38 @@ app.openapi(routes.cancelRun, async (c) => {
     data: {
       status: 'cancelling',
       cancelled_at: new Date()
-    }
+    },
+    include: { run_steps: true }
   })
   if (!run) return c.notFound() as any
 
-  const res = await queue.remove(run_id)
-  if (res === 1) {
-    run = await prisma.run.update({
-      where: {
-        id: run_id,
-        thread_id
-      },
-      data: {
-        status: 'cancelled'
-      }
-    })
-    if (!run) return c.notFound() as any
+  try {
+    // Attempt to remove the cancelled run from the async task queue
+    const res = await Promise.all([
+      queue.remove(getJobId(run)),
+      run.run_steps.length
+        ? queue.remove(getJobId(run, run.run_steps[run.run_steps.length - 1]))
+        : Promise.resolve(0)
+    ])
+
+    if (res[0] === 1 || res[1] === 1) {
+      run = await prisma.run.update({
+        where: {
+          id: run_id,
+          thread_id
+        },
+        data: {
+          status: 'cancelled'
+        },
+        include: { run_steps: true }
+      })
+      if (!run) return c.notFound() as any
+    }
+  } catch (err) {
+    console.warn(
+      `Error removing cancelled run "${run_id}" from async task queue`,
+      err
+    )
   }
 
   return c.jsonT(utils.convertPrismaToOAI(run))

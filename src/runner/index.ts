@@ -2,6 +2,7 @@ import { Msg, type Prompt, extractJsonObject } from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
 import 'dotenv/config'
 import { asyncExitHook } from 'exit-hook'
+import pMap from 'p-map'
 import type { RunStepDetailsToolCallsObject } from 'src/generated/oai'
 import { convertAssistantToolsToChatMessageTools } from 'src/lib/utils'
 
@@ -198,7 +199,7 @@ export const worker = new Worker<JobData, JobResult>(
           `Unexpected error during run "${runId}": received a function call, which should be a tools call`
         )
       } else if (Msg.isToolCall(message)) {
-        let status: Run['status'] = 'in_progress'
+        let status = 'in_progress' as Run['status']
 
         const toolCalls = message.tool_calls.map<RunStepDetailsToolCallsObject>(
           (toolCall) => {
@@ -251,11 +252,31 @@ export const worker = new Worker<JobData, JobResult>(
             }
           }
         })
+        runSteps.push(runStep)
 
         run = await prisma.run.update({
           where: { id: run.id },
           data: { status }
         })
+
+        // Handle retrieval and code_interpreter tool calls
+        const toolCalResults = await pMap(
+          message.tool_calls,
+          async (toolCall) => {
+            if (toolCall.function.name === 'retrieval') {
+              // TODO: retrieval impl
+            } else if (toolCall.function.name === 'code_interpreter') {
+              // TODO: code_interpreter impl
+            } else {
+              return
+            }
+          },
+          {
+            concurrency: 8
+          }
+        )
+
+        // TODO: handle toolCallResults and update status accordingly
       } else {
         // TODO: handle annotations
         const newMessage = await prisma.message.create({
