@@ -1,4 +1,4 @@
-import { type ConnectionOptions } from 'bullmq'
+import { type ConnectionOptions, type DefaultJobOptions } from 'bullmq'
 
 export const env = process.env.NODE_ENV || 'development'
 export const isDev = env === 'development'
@@ -19,6 +19,10 @@ export namespace queue {
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD,
     username: process.env.REDIS_USERNAME ?? 'default'
+  }
+  export const defaultJobOptions: DefaultJobOptions = {
+    removeOnComplete: true,
+    removeOnFail: 1000
   }
 
   export const concurrency = isDev ? 1 : 16

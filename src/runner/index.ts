@@ -24,6 +24,9 @@ export const worker = new Worker<JobData, JobResult>(
     }
 
     const { runId } = job.data
+    console.log(
+      `Runner processing job "${job.id}" ${job.name} for run "${runId}"`
+    )
     let jobErrorResult: JobResult | undefined
 
     async function checkRunStatus(
@@ -31,7 +34,7 @@ export const worker = new Worker<JobData, JobResult>(
       { strict = true }: { strict?: boolean } = {}
     ) {
       if (!run) {
-        throw new Error(`Invalid run id "${runId}"`)
+        throw new Error(`Invalid run "${runId}"`)
       }
 
       if (run.status === 'cancelling') {
@@ -78,6 +81,7 @@ export const worker = new Worker<JobData, JobResult>(
         return jobErrorResult
       }
 
+      await job.updateProgress(50)
       return null
     }
 

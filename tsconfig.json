@@ -1,5 +1,5 @@
 {
-  "include": ["src", "bin"],
+  "include": ["src", "bin", "e2e"],
   "exclude": ["node_modules", "dist", "openai-openapi"],
   "compilerOptions": {
     "target": "es2020",

@@ -47,13 +47,14 @@ app.openapi(routes.createThreadAndRun, async (c) => {
   })
 
   // Kick off async task
-  await queue.add(
+  const job = await queue.add(
     config.queue.threadRunJobName,
     { runId: run.id },
     {
       jobId: getJobId(run)
     }
   )
+  console.log('job', job.asJSON())
 
   return c.jsonT(utils.convertPrismaToOAI(run))
 })
@@ -84,13 +85,14 @@ app.openapi(routes.createRun, async (c) => {
   })
 
   // Kick off async task
-  await queue.add(
+  const job = await queue.add(
     config.queue.threadRunJobName,
     { runId: run.id },
     {
       jobId: getJobId(run)
     }
   )
+  console.log('job', job.asJSON())
 
   return c.jsonT(utils.convertPrismaToOAI(run))
 })
@@ -263,13 +265,14 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
       })
 
       // Resume async task
-      await queue.add(
+      const job = await queue.add(
         config.queue.threadRunJobName,
         { runId: run.id },
         {
           jobId: getJobId(run, runStep)
         }
       )
+      console.log('job', job.asJSON())
       break
     }
 
