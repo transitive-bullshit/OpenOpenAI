@@ -7,7 +7,7 @@
 </p>
 
 - [Intro](#intro)
-- [Tech Stack](#tech-stack)
+- [Stack](#stack)
 - [Development](#development)
   - [Environment Variables](#environment-variables)
   - [Services](#services)
@@ -45,7 +45,7 @@ This project is not meant to be a full recreation of the entire OpenAI API. Rath
 - Runs
 - RunSteps
 
-## Tech Stack
+## Stack
 
 - [Postgres](https://www.postgresql.org) - Primary datastore via [Prisma](https://www.prisma.io) ([schema file](./prisma/schema.prisma))
 - [Redis](https://redis.io) - Backing store for the async task queue used to process thread runs via [BullMQ](https://bullmq.io)
