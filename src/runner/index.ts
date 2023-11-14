@@ -3,6 +3,7 @@ import { Worker } from 'bullmq'
 import { asyncExitHook } from 'exit-hook'
 import { signalsByNumber } from 'human-signals'
 import pMap from 'p-map'
+import plur from 'plur'
 
 import * as config from '~/lib/config'
 import type { RunStepDetailsToolCallsObject } from '~/generated/oai'
@@ -34,6 +35,9 @@ export const worker = new Worker<JobData, JobResult>(
       { strict = true }: { strict?: boolean } = {}
     ) {
       if (!run) {
+        console.error(
+          `Error runner "${job.id}" ${job.name}: Invalid run "${runId}"`
+        )
         throw new Error(`Invalid run "${runId}"`)
       }
 
@@ -48,6 +52,9 @@ export const worker = new Worker<JobData, JobResult>(
           status: run.status
         }
 
+        console.warn(
+          `Runner "${job.id}" ${job.name}: run "${runId}" has been cancelled`
+        )
         return jobErrorResult
       }
 
@@ -62,6 +69,9 @@ export const worker = new Worker<JobData, JobResult>(
           error: `Run status is "${run.status}", cannot process run`
         }
 
+        console.error(
+          `Error runner "${job.id}" ${job.name}: invalid run "${runId}" status "${run.status}"`
+        )
         return jobErrorResult
       }
 
@@ -78,6 +88,7 @@ export const worker = new Worker<JobData, JobResult>(
           error: 'Run expired'
         }
 
+        console.warn(`Runner "${job.id}" ${job.name}: run "${runId}" expired`)
         return jobErrorResult
       }
 
@@ -97,30 +108,36 @@ export const worker = new Worker<JobData, JobResult>(
     let runStep: RunStep
 
     do {
-      const {
-        run_steps: runSteps,
-        assistant,
-        thread,
-        ...rest
-      } = await prisma.run.findUniqueOrThrow({
-        where: { id: runId },
-        include: { thread: true, assistant: true, run_steps: true }
-      })
-      run = rest
-
-      if (await checkRunStatus(run)) {
-        return jobErrorResult!
-      }
-
-      if (!thread) {
-        throw new Error(`Invalid run "${runId}": thread does not exist`)
-      }
-
-      if (!assistant) {
-        throw new Error(`Invalid run "${runId}": assistant does not exist`)
-      }
-
       try {
+        const {
+          run_steps: runSteps,
+          assistant,
+          thread,
+          ...rest
+        } = await prisma.run.findUniqueOrThrow({
+          where: { id: runId },
+          include: { thread: true, assistant: true, run_steps: true }
+        })
+        run = rest
+
+        if (await checkRunStatus(run)) {
+          return jobErrorResult!
+        }
+
+        if (!thread) {
+          console.error(
+            `Error runner "${job.id}" ${job.name}: Invalid run "${runId}": thread does not exist`
+          )
+          throw new Error(`Invalid run "${runId}": thread does not exist`)
+        }
+
+        if (!assistant) {
+          console.error(
+            `Error runner "${job.id}" ${job.name}: Invalid run "${runId}": assistant does not exist`
+          )
+          throw new Error(`Invalid run "${runId}": assistant does not exist`)
+        }
+
         const startedAt = new Date()
 
         if (run.status !== 'in_progress') {
@@ -201,6 +218,15 @@ export const worker = new Worker<JobData, JobResult>(
             )
           }
         }
+
+        console.log(
+          `Runner "${job.id}" ${job.name} run "${run.id}": chat completion call`,
+          {
+            messages: chatMessages,
+            model: assistant.model,
+            tools: convertAssistantToolsToChatMessageTools(assistant.tools)
+          }
+        )
 
         // Invoke the chat model with the thread context, asssistant config,
         // any tool outputs from previous run steps, and available tools
@@ -286,11 +312,18 @@ export const worker = new Worker<JobData, JobResult>(
           })
 
           if (status !== run.status) {
+            // TODO: check for run cancellation or expiration
             run = await prisma.run.update({
               where: { id: run.id },
               data: { status }
             })
           }
+
+          console.log(
+            `Runner "${job.id}" ${job.name} run "${run.id}": invoking ${
+              message.tool_calls.length
+            } tool ${plur('call', message.tool_calls.length)}`
+          )
 
           // Handle retrieval and code_interpreter tool calls
           const toolResults: Record<string, any> = {}
@@ -363,9 +396,9 @@ export const worker = new Worker<JobData, JobResult>(
             const completedAt = new Date()
             const isCompleted = status !== 'requires_action'
 
-            // TODO: In-between steps, if isCompleted is `false`, we may have received
-            // `submit_tool_outputs` for some tools, so we need to include any possible
-            // external tool call updates in our update
+            // TODO: In-between steps, if isCompleted is `false`, we may have
+            // received `submit_tool_outputs` for some tools, so we need to
+            // include any possible external tool call updates in our update
             runStep = await prisma.runStep.findUniqueOrThrow({
               where: { id: runStep.id }
             })
@@ -386,9 +419,13 @@ export const worker = new Worker<JobData, JobResult>(
                 }
               }
             })
-          }
 
-          // We will now loop because run.status === 'in_progress'
+            // If `isCompleted`, we will now loop because run.status should be
+            // 'in_progress', else this job will finish with the run having
+            // 'requires_action' status
+          } else {
+            // The job will finish with the run having 'requires_action' status
+          }
         } else {
           const completedAt = new Date()
 
@@ -436,11 +473,20 @@ export const worker = new Worker<JobData, JobResult>(
           return jobErrorResult!
         }
 
+        console.log(
+          `Runner "${job.id}" ${job.name} run "${runId}" job done with status "${run.status}"`
+        )
+
         return {
           runId,
           status: run.status
         }
       } catch (err: any) {
+        console.error(
+          `Error runner "${job.id}" ${job.name} run "${runId}":`,
+          err
+        )
+
         await prisma.run.update({
           where: { id: runId },
           data: {

@@ -1,7 +1,7 @@
 import { type ConnectionOptions, type DefaultJobOptions } from 'bullmq'
 
 export const env = process.env.NODE_ENV || 'development'
-export const isDev = env === 'development'
+export const isDev = env !== 'production'
 
 export const port = parseInt(process.env.PORT || '3000')
 export const processGracefulExitWaitTimeMs = 5000
@@ -18,8 +18,12 @@ export namespace queue {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD,
-    username: process.env.REDIS_USERNAME ?? 'default'
+    username: process.env.REDIS_USERNAME ?? 'default',
+    // Fail fast when redis is offline
+    // @see https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down
+    enableOfflineQueue: false
   }
+
   export const defaultJobOptions: DefaultJobOptions = {
     removeOnComplete: true,
     removeOnFail: 1000
