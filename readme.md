@@ -53,7 +53,7 @@ This project is not meant to be a full recreation of the entire OpenAI API. Rath
   - Any S3-compatible storage provider is supported, such as [Cloudflare R2](https://developers.cloudflare.com/r2/)
 - [Hono](https://hono.dev) - Serves the REST API via [@hono/zod-openapi](https://github.com/honojs/middleware/tree/main/packages/zod-openapi)
   - We're using the [Node.js](https://hono.dev/getting-started/nodejs) adaptor by default, but Hono supports many environments including CF workers, Vercel, Netlify, Deno, Bun, Lambda, etc.
-- [TypeScript](https://www.typescriptlang.org) - Used throughout 💕
+- [TypeScript](https://www.typescriptlang.org) 💕
 
 ## Development
 
