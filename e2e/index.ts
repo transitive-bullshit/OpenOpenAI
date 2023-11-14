@@ -94,7 +94,7 @@ async function main() {
 
     let listMessages = await openai.beta.threads.messages.list(thread.id)
     assert(listMessages?.data)
-    console.log('messages', listMessages.data)
+    console.log('messages', prettifyMessages(listMessages.data))
 
     let run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: assistant.id,
@@ -227,7 +227,7 @@ async function main() {
 
     listMessages = await openai.beta.threads.messages.list(thread.id)
     assert(listMessages?.data)
-    console.log('messages', listMessages.data)
+    console.log('messages', prettifyMessages(listMessages.data))
   } catch (err) {
     console.error(err)
     process.exit(1)
@@ -245,6 +245,13 @@ async function main() {
       }
     }
   }
+}
+
+function prettifyMessages(messages: any[]) {
+  return messages.map((message) => ({
+    ...message,
+    content: message.content?.[0]?.text?.value ?? message.content
+  }))
 }
 
 main()
