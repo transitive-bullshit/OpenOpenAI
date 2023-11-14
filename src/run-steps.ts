@@ -29,8 +29,9 @@ app.openapi(routes.getRunStep, async (c) => {
       run_id
     }
   })
+  if (!res) return c.notFound() as any
 
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 export default app

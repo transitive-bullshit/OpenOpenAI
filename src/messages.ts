@@ -14,6 +14,9 @@ app.openapi(routes.listMessages, async (c) => {
 
   const params = utils.getPrismaFindManyParams(query)
   const res = await prisma.message.findMany({
+    orderBy: {
+      created_at: 'desc'
+    },
     ...params,
     where: {
       ...params?.where,
@@ -52,9 +55,9 @@ app.openapi(routes.createMessage, async (c) => {
       thread_id
     }
   })
+  if (!res) return c.notFound() as any
 
-  // TODO: this cast shouldn't be necessary
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.getMessage, async (c) => {
@@ -67,6 +70,7 @@ app.openapi(routes.getMessage, async (c) => {
       thread_id
     }
   })
+  if (!res) return c.notFound() as any
 
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
@@ -83,10 +87,9 @@ app.openapi(routes.modifyMessage, async (c) => {
     },
     data: utils.convertOAIToPrisma(body)
   })
+  if (!res) return c.notFound() as any
 
-  // TODO: assistant_id and run_id may not exist here, but the output
-  // types are too strict
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 export default app

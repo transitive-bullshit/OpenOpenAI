@@ -11,7 +11,7 @@ declare global {
    */
   namespace PrismaJson {
     type Metadata = JsonifiableObject
-    type Tool = oai.FluffyAssistantToolsSchema
+    type Tool = oai.FluffyAssistantTools
     type MessageContent = oai.MessageContentObject
     type LastError = oai.FluffyLastError
     type RequiredAction = oai.RequiredAction

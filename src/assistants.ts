@@ -36,6 +36,7 @@ app.openapi(routes.getAssistant, async (c) => {
       id: assistant_id
     }
   })
+  if (!res) return c.notFound() as any
 
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
@@ -51,6 +52,7 @@ app.openapi(routes.modifyAssistant, async (c) => {
     },
     data: utils.convertOAIToPrisma(body)
   })
+  if (!res) return c.notFound() as any
 
   return c.jsonT(utils.convertPrismaToOAI(res))
 })
@@ -64,6 +66,7 @@ app.openapi(routes.deleteAssistant, async (c) => {
       id: assistant_id
     }
   })
+  if (!res) return c.notFound() as any
 
   return c.jsonT({
     deleted: true,

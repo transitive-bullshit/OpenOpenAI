@@ -2,6 +2,7 @@ import { ChatModel, createOpenAIClient } from '@dexaai/dexter/model'
 import { Msg, type Prompt } from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
 import { asyncExitHook } from 'exit-hook'
+import { convertAssistantToolsToChatMessageTools } from 'src/lib/utils'
 
 import * as config from '../lib/config'
 import { type Run, prisma } from '../lib/db'
@@ -207,7 +208,7 @@ export const worker = new Worker<JobData, JobResult>(
         client: createOpenAIClient(),
         params: {
           model: assistant.model,
-          tools: assistant.tools
+          tools: convertAssistantToolsToChatMessageTools(assistant.tools)
         }
       })
 

@@ -50,9 +50,9 @@ app.openapi(routes.createFile, async (c) => {
       purpose
     }
   })
+  if (!res) return c.notFound() as any
 
-  // TODO: this cast shouldn't be necessary
-  return c.jsonT(utils.convertPrismaToOAI(res) as any)
+  return c.jsonT(utils.convertPrismaToOAI(res))
 })
 
 app.openapi(routes.deleteFile, async (c) => {
@@ -64,6 +64,7 @@ app.openapi(routes.deleteFile, async (c) => {
       id: file_id
     }
   })
+  if (!res) return c.notFound() as any
 
   return c.jsonT({
     deleted: true,
@@ -95,6 +96,7 @@ app.openapi(routes.downloadFile, async (c) => {
       id: file_id
     }
   })
+  if (!res) return c.notFound() as any
 
   const object = await storage.getObject(res.filename)
   // TODO: what encoding should we use here? it's not specified by the spec

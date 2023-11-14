@@ -40,6 +40,7 @@ app.openapi(routes.createThreadAndRun, async (c) => {
       ...utils.convertOAIToPrisma(data),
       thread_id: thread.id,
       status: 'queued' as const
+      // TODO: expires_at
     }
   })
 
@@ -75,6 +76,7 @@ app.openapi(routes.createRun, async (c) => {
       ...utils.convertOAIToPrisma(body),
       thread_id,
       status: 'queued' as const
+      // TODO: expires_at
     }
   })
 
@@ -282,8 +284,6 @@ app.openapi(routes.cancelRun, async (c) => {
     if (!run) return c.notFound() as any
   }
 
-  // TODO: assistant_id and run_id may not exist here, but the output
-  // types are too strict
   return c.jsonT(utils.convertPrismaToOAI(run))
 })
 

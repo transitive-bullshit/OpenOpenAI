@@ -1,6 +1,45 @@
+import { type Model } from '@dexaai/dexter/model'
 import type { Simplify } from 'type-fest'
 
+import { type FluffyAssistantTools } from '../generated/oai'
 import '../prisma-json-types.d.ts'
+
+export function convertAssistantToolsToChatMessageTools(
+  tools: FluffyAssistantTools[]
+): Model.Chat.Config['tools'] {
+  return tools.map((tool) => {
+    switch (tool.type) {
+      case 'function':
+        return {
+          type: 'function',
+          function: tool.function!
+        }
+
+      case 'retrieval':
+        return {
+          type: 'function',
+          function: {
+            name: 'retrieval',
+            description: 'TODO',
+            parameters: {} // TODO
+          }
+        }
+
+      case 'code_interpreter':
+        return {
+          type: 'function',
+          function: {
+            name: 'code_interpreter',
+            description: 'TODO',
+            parameters: {} // TODO
+          }
+        }
+
+      default:
+        throw new Error(`Invalid tool type: "${tool.type}"`)
+    }
+  })
+}
 
 export type OAITypeToPrismaType<T extends Record<string, unknown>> = Simplify<
   RequiredNonNullableObject<
