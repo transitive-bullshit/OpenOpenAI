@@ -1,4 +1,4 @@
-# Open OpenAI <!-- omit in toc -->
+# OpenOpenAIAssistant <!-- omit in toc -->
 
 <p>
   <a href="https://github.com/transitive-bullshit/OpenOpenAI/actions/workflows/test.yml"><img alt="Build Status" src="https://github.com/transitive-bullshit/OpenOpenAI/actions/workflows/test.yml/badge.svg" /></a>
@@ -18,20 +18,9 @@ TODO
 
 ## TODO
 
-ThreadObjectSchema is incorrectly mapped
-
-ListAssistantsParamsQueryClassSchema
-ListMessagesParamsQueryClassSchema number causes issue with typings of all params
-
-- no listThreads?
-- no deleteMessage?
-
 - prefix ids (see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719))
 
-- createFile
-- downloadFile
-- file to blob storage
-- handle async task queue underlying `run`
+- get hosted redis working
 - handle locking thread and messages
 - built-in retrieval tool
 - built-in interpreter tool
