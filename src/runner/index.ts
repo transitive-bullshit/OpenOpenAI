@@ -2,16 +2,17 @@ import { Msg, type Prompt, extractJsonObject } from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
 import { asyncExitHook } from 'exit-hook'
 import pMap from 'p-map'
-import type { RunStepDetailsToolCallsObject } from 'src/generated/oai'
+
+import * as config from '~/lib/config'
+import type { RunStepDetailsToolCallsObject } from '~/generated/oai'
+import { type Run, type RunStep, prisma } from '~/lib/db'
+import type { JobData, JobResult } from '~/lib/types'
 import {
   convertAssistantToolCallsToChatMessage,
   convertAssistantToolsToChatMessageTools,
   deepMergeArray
-} from 'src/lib/utils'
+} from '~/lib/utils'
 
-import * as config from '../lib/config'
-import { type Run, prisma } from '../lib/db'
-import type { JobData, JobResult } from '../lib/types'
 import { chatModel } from './models'
 
 export const worker = new Worker<JobData, JobResult>(

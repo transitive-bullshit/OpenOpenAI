@@ -1,8 +1,8 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 
-import * as routes from './generated/oai-routes'
-import * as utils from './lib/utils'
-import { prisma } from './lib/db'
+import * as routes from '~/generated/oai-routes'
+import * as utils from '~/lib/utils'
+import { prisma } from '~/lib/db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 

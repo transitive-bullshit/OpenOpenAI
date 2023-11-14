@@ -2,7 +2,8 @@ import type { z } from '@hono/zod-openapi'
 import createError from 'http-errors'
 import pMap from 'p-map'
 
-import * as routes from '../generated/oai-routes'
+import * as routes from '~/generated/oai-routes'
+
 import * as utils from './utils'
 import { prisma } from './db'
 

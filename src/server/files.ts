@@ -3,10 +3,10 @@ import { sha256 } from 'crypto-hash'
 import { fileTypeFromBuffer } from 'file-type'
 import createHttpError from 'http-errors'
 
-import * as routes from './generated/oai-routes'
-import * as storage from './lib/storage'
-import * as utils from './lib/utils'
-import { prisma } from './lib/db'
+import * as routes from '~/generated/oai-routes'
+import * as storage from '~/lib/storage'
+import * as utils from '~/lib/utils'
+import { prisma } from '~/lib/db'
 
 const app: OpenAPIHono = new OpenAPIHono()
 

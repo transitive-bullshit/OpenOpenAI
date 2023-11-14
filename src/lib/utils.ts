@@ -6,7 +6,8 @@ import type { Simplify } from 'type-fest'
 import {
   type FluffyAssistantTools,
   type RunStepDetailsToolCallsObject
-} from '../generated/oai'
+} from '~/generated/oai'
+
 import '../prisma-json-types.d.ts'
 
 export type OAITypeToPrismaType<T extends Record<string, unknown>> = Simplify<

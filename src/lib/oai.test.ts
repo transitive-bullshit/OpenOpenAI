@@ -2,7 +2,8 @@ import type * as prisma from '@prisma/client'
 import type { z } from '@hono/zod-openapi'
 import { describe, expectTypeOf, it } from 'vitest'
 
-import type * as oai from '../generated/oai'
+import type * as oai from '~/generated/oai'
+
 import type { OAITypeToPrismaType, PrismaTypeToOAIType } from './utils'
 
 describe('Assistant', () => {
