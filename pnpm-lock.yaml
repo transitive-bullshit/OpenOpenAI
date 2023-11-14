@@ -11,6 +11,9 @@ dependencies:
   '@dexaai/dexter':
     specifier: ^1.1.0
     version: 1.1.0
+  '@fastify/deepmerge':
+    specifier: ^1.3.0
+    version: 1.3.0
   '@hono/node-server':
     specifier: ^1.2.0
     version: 1.2.0

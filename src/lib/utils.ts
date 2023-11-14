@@ -1,45 +1,13 @@
-import { type Model } from '@dexaai/dexter/model'
+import type { Model } from '@dexaai/dexter/model'
+import { Msg, type Prompt } from '@dexaai/dexter/prompt'
+import { deepmerge as deepmergeInit } from '@fastify/deepmerge'
 import type { Simplify } from 'type-fest'
 
-import { type FluffyAssistantTools } from '../generated/oai'
+import {
+  type FluffyAssistantTools,
+  type RunStepDetailsToolCallsObject
+} from '../generated/oai'
 import '../prisma-json-types.d.ts'
-
-export function convertAssistantToolsToChatMessageTools(
-  tools: FluffyAssistantTools[]
-): Model.Chat.Config['tools'] {
-  return tools.map((tool) => {
-    switch (tool.type) {
-      case 'function':
-        return {
-          type: 'function',
-          function: tool.function!
-        }
-
-      case 'retrieval':
-        return {
-          type: 'function',
-          function: {
-            name: 'retrieval',
-            description: 'TODO', // TODO
-            parameters: {} // TODO
-          }
-        }
-
-      case 'code_interpreter':
-        return {
-          type: 'function',
-          function: {
-            name: 'code_interpreter',
-            description: 'TODO', // TODO
-            parameters: {} // TODO
-          }
-        }
-
-      default:
-        throw new Error(`Invalid tool type: "${tool.type}"`)
-    }
-  })
-}
 
 export type OAITypeToPrismaType<T extends Record<string, unknown>> = Simplify<
   RequiredNonNullableObject<
@@ -197,4 +165,85 @@ export function getPaginatedObject<
     has_more: data.length >= params.take,
     object: 'list' as const
   }
+}
+
+type DeepMerge = ReturnType<typeof deepmergeInit>
+export const deepMerge: DeepMerge = deepmergeInit()
+export const deepMergeArray: DeepMerge = deepmergeInit({
+  mergeArray:
+    (opts) =>
+    (target: any[], source: any[]): any[] => {
+      return target.map((value, index) => opts.deepmerge(value, source[index]))
+    }
+})
+
+export function convertAssistantToolsToChatMessageTools(
+  tools: FluffyAssistantTools[]
+): Model.Chat.Config['tools'] {
+  return tools.map((tool) => {
+    switch (tool.type) {
+      case 'function':
+        return {
+          type: 'function',
+          function: tool.function!
+        }
+
+      case 'retrieval':
+        return {
+          type: 'function',
+          function: {
+            name: 'retrieval',
+            description: 'TODO', // TODO
+            parameters: {} // TODO
+          }
+        }
+
+      case 'code_interpreter':
+        return {
+          type: 'function',
+          function: {
+            name: 'code_interpreter',
+            description: 'TODO', // TODO
+            parameters: {} // TODO
+          }
+        }
+
+      default:
+        throw new Error(`Invalid tool type: "${tool.type}"`)
+    }
+  })
+}
+
+export function convertAssistantToolCallsToChatMessage(
+  toolCalls: RunStepDetailsToolCallsObject[]
+): Prompt.Msg[] {
+  return toolCalls.map((toolCall) => {
+    switch (toolCall.type) {
+      case 'function':
+        return Msg.toolResult(toolCall.function!.output, toolCall.id)
+
+      case 'code_interpreter':
+        // TODO: handle 'image' code_interpreter outputs
+        return Msg.toolResult(
+          toolCall
+            .code_interpreter!.outputs.filter((o) => o.type === 'logs')
+            .map((o) => o.logs)
+            .filter(Boolean)
+            .join('\n\n'),
+          toolCall.id
+        )
+
+      case 'retrieval':
+        return Msg.toolResult(
+          // TODO: use stringify helper from dexter
+          JSON.stringify(toolCall.retrieval!.output, null, 2),
+          toolCall.id
+        )
+
+      default:
+        throw new Error(
+          `Invalid tool call type: "${toolCall.type}" for tool call: "${toolCall.id}"`
+        )
+    }
+  })
 }
