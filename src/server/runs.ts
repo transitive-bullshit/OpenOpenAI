@@ -17,7 +17,13 @@ app.openapi(routes.listRuns, async (c) => {
   console.log('listRuns', { thread_id, query })
 
   const params = utils.getPrismaFindManyParams(query)
-  const res = await prisma.run.findMany(params)!
+  const res = await prisma.run.findMany({
+    ...params,
+    where: {
+      ...params?.where,
+      thread_id
+    }
+  })
 
   // TODO: figure out why the types aren't working here
   return c.jsonT(utils.getPaginatedObject(res, params) as any)

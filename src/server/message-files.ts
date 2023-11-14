@@ -12,7 +12,14 @@ app.openapi(routes.listMessageFiles, async (c) => {
   console.log('listMessageFiles', { thread_id, message_id, query })
 
   const params = utils.getPrismaFindManyParams(query)
-  const res = await prisma.messageFile.findMany(params)
+  const res = await prisma.messageFile.findMany({
+    ...params,
+    where: {
+      ...params?.where,
+      thread_id,
+      message_id
+    }
+  })
 
   return c.jsonT(utils.getPaginatedObject(res, params))
 })

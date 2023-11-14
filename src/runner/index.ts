@@ -62,7 +62,11 @@ export const worker = new Worker<JobData, JobResult>(
         return null
       }
 
-      if (run.status !== 'queued' && run.status !== 'requires_action') {
+      if (
+        run.status !== 'queued' &&
+        run.status !== 'in_progress' &&
+        run.status !== 'requires_action'
+      ) {
         jobErrorResult = {
           runId: run.id,
           status: run.status,
@@ -297,6 +301,13 @@ export const worker = new Worker<JobData, JobResult>(
               }
             )
 
+          const builtInToolCalls = toolCalls.filter(
+            (toolCall) => toolCall.type !== 'function'
+          )
+          const externalToolCalls = toolCalls.filter(
+            (toolCall) => toolCall.type === 'function'
+          )
+
           runStep = await prisma.runStep.create({
             data: {
               type: 'tool_calls',
@@ -315,14 +326,37 @@ export const worker = new Worker<JobData, JobResult>(
             // TODO: check for run cancellation or expiration
             run = await prisma.run.update({
               where: { id: run.id },
-              data: { status }
+              data: {
+                status,
+                required_action:
+                  status !== 'requires_action'
+                    ? undefined
+                    : {
+                        type: 'submit_tool_outputs',
+                        submit_tool_outputs: {
+                          // TODO: this cast shouldn't be necessary
+                          tool_calls: toolCalls.filter(
+                            (toolCall) => toolCall.type === 'function'
+                          ) as any
+                        }
+                      }
+              }
             })
+
+            console.log(
+              `Runner "${job.id}" ${job.name} run "${run.id}" status "${
+                run.status
+              }" submit_tool_outputs waiting for ${
+                externalToolCalls.length
+              } tool ${plur('call', externalToolCalls.length)}`,
+              run
+            )
           }
 
           console.log(
             `Runner "${job.id}" ${job.name} run "${run.id}": invoking ${
-              message.tool_calls.length
-            } tool ${plur('call', message.tool_calls.length)}`
+              builtInToolCalls.length
+            } tool ${plur('call', builtInToolCalls.length)}`
           )
 
           // Handle retrieval and code_interpreter tool calls

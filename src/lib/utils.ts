@@ -2,6 +2,7 @@ import type { Model } from '@dexaai/dexter/model'
 import { Msg, type Prompt } from '@dexaai/dexter/prompt'
 import { deepmerge as deepmergeInit } from '@fastify/deepmerge'
 import type { Simplify } from 'type-fest'
+import type { IterableElement } from 'type-fest'
 
 import {
   type FluffyAssistantTools,
@@ -181,44 +182,89 @@ export const deepMergeArray: DeepMerge = deepmergeInit({
 export function convertAssistantToolsToChatMessageTools(
   tools: FluffyAssistantTools[]
 ): Model.Chat.Config['tools'] {
-  return tools.map((tool) => {
-    switch (tool.type) {
-      case 'function':
-        return {
-          type: 'function',
-          function: tool.function!
-        }
+  return tools.map(convertAssistantToolToChatMessageTool)
+}
 
-      case 'retrieval':
-        return {
-          type: 'function',
-          function: {
-            name: 'retrieval',
-            description: 'TODO', // TODO
-            parameters: {} // TODO
-          }
-        }
+export function convertAssistantToolToChatMessageTool(
+  tool: FluffyAssistantTools
+): IterableElement<Model.Chat.Config['tools']> {
+  switch (tool.type) {
+    case 'function':
+      return {
+        type: 'function',
+        function: tool.function!
+      }
 
-      case 'code_interpreter':
-        return {
-          type: 'function',
-          function: {
-            name: 'code_interpreter',
-            description: 'TODO', // TODO
-            parameters: {} // TODO
-          }
+    case 'retrieval':
+      return {
+        type: 'function',
+        function: {
+          name: 'retrieval',
+          description: 'TODO', // TODO
+          parameters: {} // TODO
         }
+      }
 
-      default:
-        throw new Error(`Invalid tool type: "${tool.type}"`)
-    }
-  })
+    case 'code_interpreter':
+      return {
+        type: 'function',
+        function: {
+          name: 'code_interpreter',
+          description: 'TODO', // TODO
+          parameters: {} // TODO
+        }
+      }
+
+    default:
+      throw new Error(`Invalid tool type: "${tool.type}"`)
+  }
 }
 
 export function convertAssistantToolCallsToChatMessages(
   toolCalls: RunStepDetailsToolCallsObject[]
 ): Prompt.Msg[] {
-  return toolCalls.map((toolCall) => {
+  const toolCallMessage = Msg.toolCall(
+    toolCalls.map((toolCall) => {
+      switch (toolCall.type) {
+        case 'function':
+          return {
+            id: toolCall.id,
+            type: 'function',
+            function: {
+              name: toolCall.function!.name!,
+              arguments: toolCall.function!.arguments!
+            }
+          }
+
+        case 'retrieval':
+          return {
+            id: toolCall.id,
+            type: 'function',
+            function: {
+              name: 'retrieval',
+              // TODO: no idea if this is correct
+              arguments: toolCall.retrieval?.input ?? ''
+            }
+          }
+
+        case 'code_interpreter':
+          return {
+            id: toolCall.id,
+            type: 'function',
+            function: {
+              name: 'code_interpreter',
+              // TODO: no idea if this is correct
+              arguments: toolCall.code_interpreter?.input ?? ''
+            }
+          }
+
+        default:
+          throw new Error(`Invalid tool call type: "${toolCall.type}"`)
+      }
+    })
+  )
+
+  const toolCallResults = toolCalls.map((toolCall) => {
     switch (toolCall.type) {
       case 'function':
         return Msg.toolResult(toolCall.function!.output, toolCall.id)
@@ -247,4 +293,6 @@ export function convertAssistantToolCallsToChatMessages(
         )
     }
   })
+
+  return [toolCallMessage as Prompt.Msg].concat(toolCallResults)
 }
