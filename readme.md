@@ -18,21 +18,21 @@
 
 ## Intro
 
-This project is a self-hosted version of OpenAI's new stateful Assistants API.
+**This project is a self-hosted version of OpenAI's new stateful Assistants API.** 💪
 
-All API route definitions and types are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official OpenAI API and your custom API simply by changing the `baseUrl`.
+All API route definitions and types are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official OpenAI API and your custom API simply by changing the `baseUrl`. 🤯
 
-This means that all API parameters, responses, and types are wire-compatible with the official OpenAI API, and the fact that they're auto-generated means that it will be easy to keep them in sync over time.
+This means that all API parameters, responses, and types are wire-compatible with the official OpenAI API, and the fact that they're auto-generated means that it will be relatively easy to keep them in sync over time.
 
 This unlocks all sorts of useful applications... including:
 
-- Using the OpenAI Assistants API with custom models
+- Using the OpenAI Assistants API with **custom models**
 - Full customization over the built-in retrieval tool
-- Using a custom code interpreter like [open-interpreter](https://github.com/KillianLucas/open-interpreter)
-- Self-hosting / on-premise deployments of OpenAI-compatible Assistants
-- Full control over assistant evals
-- Developing & testing GPTs in a fully sandboxed environment
-- Sandboxed testing of custom Actions before deploying to the OpenAI "GPT Store"
+- Using a **custom code interpreter** like [open-interpreter](https://github.com/KillianLucas/open-interpreter)
+- **Self-hosting / on-premise** deployments of OpenAI-compatible Assistants
+- Full control over assistant **evals**
+- Developing & testing GPTs in a fully **sandboxed environment**
+- Sandboxed testing of **custom Actions** before deploying to the OpenAI "GPT Store"
 
 This project is not meant to be a full recreation of the entire OpenAI API. Rather, it is focused on the stateful portions of the new Assistants API. It supports the following resources:
 
@@ -68,13 +68,11 @@ Install deps:
 pnpm install
 ```
 
-Setup all of the environment variables in `.env`:
+### Environment Variables
 
 ```bash
 cp .env.example .env
 ```
-
-### Environment Variables
 
 - Postgres
   - `DATABASE_URL` - Postgres connection string
@@ -98,9 +96,9 @@ cp .env.example .env
 
 ### Services
 
-The app is comprised of a RESTful API server and an async task runner. Both services are stateless and can be scaled horizontally.
+The app is comprised of two services: a RESTful API server and an async task runner. Both services are stateless and can be scaled horizontally.
 
-There are two ways to run these services locally. The quick way is via `tsx`:
+There are two ways to run these services locally. The quickest way is via `tsx`:
 
 ```bash
 # Start the REST API server in one shell
@@ -187,6 +185,7 @@ GET       /openapi
 - handle locking thread and messages
 - built-in retrieval tool
 - built-in interpreter tool
+- handle context overflows
 
 ## License
 
