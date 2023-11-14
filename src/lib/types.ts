@@ -1,3 +1,5 @@
+import '@total-typescript/ts-reset'
+
 import type { Run } from './db'
 
 export type JobData = {

@@ -16,6 +16,7 @@ declare global {
     type LastError = oai.FluffyLastError
     type RequiredAction = oai.RequiredAction
     type StepDetails = oai.StepDetails
+    type RunToolCall = oai.PurpleFunction
 
     type AssistantObject = 'assistant'
     type AssistantFileObject = 'assistant.file'

@@ -52,6 +52,9 @@ devDependencies:
   '@dexaai/eslint-config':
     specifier: ^0.4.0
     version: 0.4.0(eslint@8.53.0)(typescript@5.2.2)
+  '@total-typescript/ts-reset':
+    specifier: ^0.5.1
+    version: 0.5.1
   '@trivago/prettier-plugin-sort-imports':
     specifier: ^4.2.1
     version: 4.2.1(prettier@2.8.8)
@@ -64,6 +67,9 @@ devDependencies:
   del-cli:
     specifier: ^5.1.0
     version: 5.1.0
+  dotenv:
+    specifier: ^16.3.1
+    version: 16.3.1
   dotenv-cli:
     specifier: ^7.3.0
     version: 7.3.0
@@ -2134,6 +2140,10 @@ packages:
   /@tokenizer/token@0.3.0:
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
     dev: false
+
+  /@total-typescript/ts-reset@0.5.1:
+    resolution: {integrity: sha512-AqlrT8YA1o7Ff5wPfMOL0pvL+1X+sw60NN6CcOCqs658emD6RfiXhF7Gu9QcfKBH7ELY2nInLhKSCWVoNL70MQ==}
+    dev: true
 
   /@trivago/prettier-plugin-sort-imports@4.2.1(prettier@2.8.8):
     resolution: {integrity: sha512-iuy2MPVURGdxILTchHr15VAioItuYBejKfcTmQFlxIuqA7jeaT6ngr5aUIG6S6U096d6a6lJCgaOwlRrPLlOPg==}

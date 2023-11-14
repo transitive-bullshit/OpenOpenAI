@@ -1,0 +1,83 @@
+              if (!msg.run_step_id)
+                throw new Error(
+                  `Invalid "${msg.role}" message: missing "run_step_id"`
+                )
+
+              const runStep = runSteps.find(
+                (runStep) => runStep.id === msg.run_step_id
+              )
+              if (!runStep)
+                throw new Error(
+                  `Invalid "${msg.role}" message: invalid "run_step_id"`
+                )
+              if (runStep.type !== 'tool_calls')
+                throw new Error(
+                  `Invalid "${msg.role}" message: invalid run step`
+                )
+
+              const toolCall = runStep.step_details?.tool_calls?.find(
+                (tc) => tc.type === 'function'
+              )
+              if (!toolCall?.function) throw new Error('Invalid tool call')
+
+              return [Msg.toolResult(toolCall.function?.output, toolCall.id)]
+
+
+              // 
+
+                const msgRun = await prisma.run.findUniqueOrThrow({
+                  where: { id: msg.run_id },
+                  include: {
+                    // thread: true,
+                    // assistant: true,
+                    run_steps: true
+                  }
+                })
+
+                msgRun.run_steps.sort(
+                  (a, b) => a.created_at.getTime() - b.created_at.getTime()
+                )
+
+                for (const runStep of msgRun.run_steps) {
+                  if (runStep.type === 'tool_calls') {
+                    for (const toolCall of runStep.step_details?.tool_calls!) {
+                      if (toolCall.type === 'function') {
+                        messages.push(
+                          Msg.funcCall(
+                            toolCall.function?.name,
+                            toolCall.function?.input,
+                            toolCall.id
+                          )
+                        )
+                      } else if (toolCall.type === 'tool') {
+                        messages.push(
+                          Msg.toolCall(
+                            toolCall.tool?.name,
+                            toolCall.tool?.input,
+                            toolCall.id
+                          )
+                        )
+                      } else {
+                        throw new Error(
+                          `Invalid tool call type "${toolCall.type}"`
+                        )
+                      }
+                    }
+                  } else if (runStep.type === 'message_creation') {
+                    const runStepMessageId =
+                      runStep.step_details?.message_creation?.message_id!
+
+                    if (runStepMessageId === msg.id) {
+                      messages.push(
+                        Msg.assistant(
+                          msg.content.find((c) => c.type === 'text')?.text
+                            ?.value!,
+                          { cleanContent: false }
+                        )
+                      )
+                    }
+                  } else {
+                    throw new Error(`Invalid run step type "${runStep.type}"`)
+                  }
+                }
+              }

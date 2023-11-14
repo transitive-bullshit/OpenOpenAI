@@ -20,7 +20,7 @@ export function convertAssistantToolsToChatMessageTools(
           type: 'function',
           function: {
             name: 'retrieval',
-            description: 'TODO',
+            description: 'TODO', // TODO
             parameters: {} // TODO
           }
         }
@@ -30,7 +30,7 @@ export function convertAssistantToolsToChatMessageTools(
           type: 'function',
           function: {
             name: 'code_interpreter',
-            description: 'TODO',
+            description: 'TODO', // TODO
             parameters: {} // TODO
           }
         }

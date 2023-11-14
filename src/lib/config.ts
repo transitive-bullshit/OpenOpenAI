@@ -1,6 +1,11 @@
 export const env = process.env.NODE_ENV || 'development'
 export const isDev = env === 'development'
 
+export namespace runs {
+  // 10 minute timeout
+  export const maxRunTime = 10 * 60 * 1000
+}
+
 export namespace queue {
   export const name = 'openopenai'
 

@@ -35,12 +35,13 @@ app.openapi(routes.createThreadAndRun, async (c) => {
   const { thread: threadData, ...data } = utils.convertOAIToPrisma(body)
   const { thread } = await createThread(threadData)
 
+  const now = new Date().getTime()
   const run = await prisma.run.create({
     data: {
       ...utils.convertOAIToPrisma(data),
       thread_id: thread.id,
-      status: 'queued' as const
-      // TODO: expires_at
+      status: 'queued' as const,
+      expires_at: new Date(now + config.runs.maxRunTime)
     }
   })
 
@@ -71,12 +72,13 @@ app.openapi(routes.createRun, async (c) => {
     where: { id: thread_id }
   })
 
+  const now = new Date().getTime()
   const run = await prisma.run.create({
     data: {
       ...utils.convertOAIToPrisma(body),
       thread_id,
-      status: 'queued' as const
-      // TODO: expires_at
+      status: 'queued' as const,
+      expires_at: new Date(now + config.runs.maxRunTime)
     }
   })
 
@@ -194,6 +196,23 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
       )
 
     case 'requires_action': {
+      const requiredAction = run.required_action
+      if (!requiredAction) {
+        throw createHttpError(
+          500,
+          `Run status is "${run.status}", but missing "run.required_action"`
+        )
+      }
+
+      if (requiredAction.type !== 'submit_tool_outputs') {
+        throw createHttpError(
+          500,
+          `Run status is "${run.status}", but "run.required_action.type" is not "submit_tool_outputs"`
+        )
+      }
+
+      // TODO: validate requiredAction.submit_tool_outputs
+
       const toolCalls = runStep.step_details?.tool_calls
       if (!toolCalls) throw createHttpError(500, 'Invalid tool call')
 
@@ -228,6 +247,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
         }
       }
 
+      // TODO: update corresponding ToolCall
       runStep.status = 'completed'
 
       const { id, object, created_at, ...runStepUpdate } = runStep as any
@@ -236,13 +256,12 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
         data: runStepUpdate
       })
 
-      // TODO: do we create a message object here? or is it implicitly stored in a
-      // RunStep?...
-
       await prisma.run.update({
         where: { id: run.id },
         data: { status: 'queued' }
       })
+
+      // TODO: should we re-add to task queue, with a new jobId?
 
       break
     }

@@ -1,12 +1,14 @@
-import { ChatModel, createOpenAIClient } from '@dexaai/dexter/model'
-import { Msg, type Prompt } from '@dexaai/dexter/prompt'
+import { Msg, type Prompt, extractJsonObject } from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
+import 'dotenv/config'
 import { asyncExitHook } from 'exit-hook'
+import type { RunStepDetailsToolCallsObject } from 'src/generated/oai'
 import { convertAssistantToolsToChatMessageTools } from 'src/lib/utils'
 
 import * as config from '../lib/config'
 import { type Run, prisma } from '../lib/db'
 import type { JobData, JobResult } from '../lib/types'
+import { chatModel } from './models'
 
 export const worker = new Worker<JobData, JobResult>(
   config.queue.name,
@@ -18,30 +20,53 @@ export const worker = new Worker<JobData, JobResult>(
     const { runId } = job.data
     let jobErrorResult: JobResult | undefined
 
-    async function checkRunStatus(run: Run) {
+    async function checkRunStatus(
+      run: Run,
+      { strict = true }: { strict?: boolean } = {}
+    ) {
       if (!run) {
         throw new Error(`Invalid run id "${runId}"`)
       }
 
       if (run.status === 'cancelling') {
         run = await prisma.run.update({
-          where: { id: runId },
+          where: { id: run.id },
           data: { status: 'cancelled' }
         })
 
         jobErrorResult = {
-          runId,
+          runId: run.id,
           status: run.status
         }
 
         return jobErrorResult
       }
 
+      if (!strict) {
+        return null
+      }
+
       if (run.status !== 'queued' && run.status !== 'requires_action') {
         jobErrorResult = {
-          runId,
+          runId: run.id,
           status: run.status,
           error: `Run status is "${run.status}", cannot process run`
+        }
+
+        return jobErrorResult
+      }
+
+      const now = new Date()
+      if (run.expires_at && run.expires_at < now) {
+        run = await prisma.run.update({
+          where: { id: run.id },
+          data: { status: 'expired' }
+        })
+
+        jobErrorResult = {
+          runId: run.id,
+          status: run.status,
+          error: 'Run expired'
         }
 
         return jobErrorResult
@@ -50,40 +75,41 @@ export const worker = new Worker<JobData, JobResult>(
       return null
     }
 
-    async function pollRunStatus() {
+    async function pollRunStatus({ strict = true }: { strict?: boolean } = {}) {
       const run = await prisma.run.findUniqueOrThrow({
         where: { id: runId }
       })
 
-      return checkRunStatus(run)
+      return checkRunStatus(run, { strict })
     }
 
     const {
       run_steps: runSteps,
       assistant,
       thread,
-      ...run
+      ...rest
     } = await prisma.run.findUniqueOrThrow({
       where: { id: runId },
       include: { thread: true, assistant: true, run_steps: true }
     })
+    let run = rest
 
     if (await checkRunStatus(run)) {
       return jobErrorResult!
     }
 
     if (!thread) {
-      throw new Error('Invalid run: thread does not exist')
+      throw new Error(`Invalid run "${runId}": thread does not exist`)
     }
 
     if (!assistant) {
-      throw new Error('Invalid run: assistant does not exist')
+      throw new Error(`Invalid run "${runId}": assistant does not exist`)
     }
 
     try {
       const startedAt = new Date()
 
-      await prisma.run.update({
+      run = await prisma.run.update({
         where: { id: runId },
         data: { status: 'in_progress', started_at: startedAt }
       })
@@ -97,120 +123,49 @@ export const worker = new Worker<JobData, JobResult>(
         }
       })
 
-      // const lastMessage = messages[messages.length - 1]
-      // if (!lastMessage) {
-      //   throw new Error(`Invalid run "${runId}": no messages`)
-      // }
-
-      // if (lastMessage.role !== 'assistant') {
-      //   throw new Error(
-      //     `Invalid run "${runId}": last message must be an "assistant" message`
-      //   )
-      // }
-
-      // TODO: maybe convert to a for loop? need to keep looping until we
-      // process all messages
-
+      // TODO: handle image_file attachments and annotations
       const chatMessages = messages
         .map((msg) => {
           switch (msg.role) {
-            case 'system':
-              return [
-                Msg.system(
-                  msg.content.find((c) => c.type === 'text')?.text?.value!,
-                  { cleanContent: false }
-                )
-              ]
+            case 'system': {
+              const content = msg.content.find((c) => c.type === 'text')?.text
+                ?.value
+              if (!content) return null
 
-            case 'assistant':
-              // TODO: handle funcCall and toolCall messages
-              throw new Error('TODO: handle funcCall and toolCall messages')
-
-              return [
-                Msg.assistant(
-                  msg.content.find((c) => c.type === 'text')?.text?.value!,
-                  { cleanContent: false }
-                )
-              ]
-
-            case 'user':
-              return [
-                Msg.user(
-                  msg.content.find((c) => c.type === 'text')?.text?.value!,
-                  { cleanContent: false }
-                )
-              ]
-
-            case 'function': {
-              if (!msg.run_step_id)
-                throw new Error(
-                  `Invalid "${msg.role}" message: missing "run_step_id"`
-                )
-
-              const runStep = runSteps.find(
-                (runStep) => runStep.id === msg.run_step_id
-              )
-              if (!runStep)
-                throw new Error(
-                  `Invalid "${msg.role}" message: invalid "run_step_id"`
-                )
-              if (runStep.type !== 'tool_calls')
-                throw new Error(
-                  `Invalid "${msg.role}" message: invalid run step`
-                )
-
-              const toolCall = runStep.step_details?.tool_calls?.find(
-                (tc) => tc.type === 'function'
-              )
-              if (!toolCall?.function) throw new Error('Invalid tool call')
-
-              return [
-                Msg.funcResult(
-                  toolCall.function?.output,
-                  toolCall.function.name
-                )
-              ]
+              return Msg.system(content, { cleanContent: false })
             }
 
-            case 'tool': {
-              if (!msg.run_step_id)
-                throw new Error(
-                  `Invalid "${msg.role}" message: missing "run_step_id"`
-                )
+            case 'assistant': {
+              const content = msg.content.find((c) => c.type === 'text')?.text
+                ?.value
+              if (!content) return null
 
-              const runStep = runSteps.find(
-                (runStep) => runStep.id === msg.run_step_id
-              )
-              if (!runStep)
-                throw new Error(
-                  `Invalid "${msg.role}" message: invalid "run_step_id"`
-                )
-              if (runStep.type !== 'tool_calls')
-                throw new Error(
-                  `Invalid "${msg.role}" message: invalid run step`
-                )
-
-              const toolCall = runStep.step_details?.tool_calls?.find(
-                (tc) => tc.type === 'function'
-              )
-              if (!toolCall?.function) throw new Error('Invalid tool call')
-
-              return [Msg.toolResult(toolCall.function?.output, toolCall.id)]
+              return Msg.assistant(content, { cleanContent: false })
             }
+
+            case 'user': {
+              const content = msg.content.find((c) => c.type === 'text')?.text
+                ?.value
+              if (!content) return null
+
+              return Msg.user(content, { cleanContent: false })
+            }
+
+            case 'function':
+              throw new Error(
+                'Invalid message role "function" should be handled internally'
+              )
+
+            case 'tool':
+              throw new Error(
+                'Invalid message role "tool" should be handled internally'
+              )
 
             default:
               throw new Error(`Invalid message role "${msg.role}"`)
           }
         })
-        .flat()
-
-      const chatModel = new ChatModel({
-        client: createOpenAIClient(),
-        params: {
-          model: assistant.model,
-          tools: convertAssistantToolsToChatMessageTools(assistant.tools)
-        }
-      })
+        .filter(Boolean)
 
       const assistantChatMessages = (
         assistant.instructions
@@ -218,24 +173,91 @@ export const worker = new Worker<JobData, JobResult>(
           : ([] as Prompt.Msg[])
       ).concat(chatMessages)
 
-      const res = await chatModel.run({ messages: assistantChatMessages })
+      const res = await chatModel.run({
+        messages: assistantChatMessages,
+        model: assistant.model,
+        tools: convertAssistantToolsToChatMessageTools(assistant.tools)
+      })
       const { message } = res
+
+      if (await pollRunStatus()) {
+        return jobErrorResult!
+      }
 
       if (message.role !== 'assistant') {
         throw new Error(
-          `Unexpected error for run "${runId}": last message should be an "assistant" message`
+          `Unexpected error during run "${runId}": last message should be an "assistant" message`
         )
       }
 
       const completedAt = new Date()
 
       if (Msg.isFuncCall(message)) {
-        // TODO: this should never happen since we're using tools, not functions
+        // this should never happen since we're using tools, not functions
+        throw new Error(
+          `Unexpected error during run "${runId}": received a function call, which should be a tools call`
+        )
       } else if (Msg.isToolCall(message)) {
-        for (const toolCall of message.tool_calls) {
-          // TODO
-        }
+        let status: Run['status'] = 'in_progress'
+
+        const toolCalls = message.tool_calls.map<RunStepDetailsToolCallsObject>(
+          (toolCall) => {
+            if (toolCall.type !== 'function') {
+              throw new Error(`Unsupported tool call type "${toolCall.type}"`)
+            }
+
+            if (toolCall.function.name === 'retrieval') {
+              return {
+                id: toolCall.id,
+                type: 'retrieval',
+                retrieval: extractJsonObject(toolCall.function.arguments)
+              }
+            } else if (toolCall.function.name === 'code_interpreter') {
+              return {
+                id: toolCall.id,
+                type: 'code_interpreter',
+                code_interpreter: {
+                  input: toolCall.function.arguments,
+                  // TODO: this shouldn't be required here typing-wise, because it doesn't have an output yet
+                  outputs: []
+                }
+              }
+            } else {
+              status = 'requires_action'
+
+              return {
+                id: toolCall.id,
+                type: 'function',
+                function: {
+                  // TODO: this shouldn't be required here typing-wise, because it doesn't have an output yet
+                  output: '',
+                  ...toolCall.function
+                }
+              }
+            }
+          }
+        )
+
+        const runStep = await prisma.runStep.create({
+          data: {
+            type: 'message_creation',
+            status: 'in_progress',
+            assistant_id: assistant.id,
+            thread_id: thread.id,
+            run_id: run.id,
+            step_details: {
+              type: 'tool_calls',
+              tool_calls: toolCalls
+            }
+          }
+        })
+
+        run = await prisma.run.update({
+          where: { id: run.id },
+          data: { status }
+        })
       } else {
+        // TODO: handle annotations
         const newMessage = await prisma.message.create({
           data: {
             content: {
@@ -270,12 +292,14 @@ export const worker = new Worker<JobData, JobResult>(
         })
 
         runSteps.push(runStep)
+
+        run = await prisma.run.update({
+          where: { id: run.id },
+          data: { status: 'completed', completed_at: completedAt }
+        })
       }
 
-      // TODO
-      throw new Error('not yet implemented')
-
-      if (await pollRunStatus()) {
+      if (await pollRunStatus({ strict: false })) {
         return jobErrorResult!
       }
 
@@ -287,6 +311,8 @@ export const worker = new Worker<JobData, JobResult>(
       await prisma.run.update({
         where: { id: runId },
         data: {
+          status: 'failed',
+          failed_at: new Date(),
           last_error: err.message
         }
       })

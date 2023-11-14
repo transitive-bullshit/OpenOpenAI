@@ -95,8 +95,6 @@ model Message {
   thread_id    String
   // if this message was created during a run
   run_id       String?
-  // if this message was created during a run
-  run_step_id  String?
   /// [MessageObject]
   object       String   @default("thread.message")
 
@@ -186,6 +184,20 @@ model RunStep {
   @@index([run_id, type])
 }
 
+model ToolCall {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @ignore
+
+  type     ToolCallType
+  /// [RunToolCall]
+  function Json
+
+  assistant_id String
+  thread_id    String
+  run_id       String
+}
+
 enum FileStatus {
   error
   processed
@@ -222,4 +234,10 @@ enum RunStepStatus {
 enum RunStepType {
   message_creation
   tool_calls
+}
+
+enum ToolCallType {
+  function
+  code_interpreter
+  retrieval
 }

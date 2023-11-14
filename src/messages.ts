@@ -38,6 +38,10 @@ app.openapi(routes.createMessage, async (c) => {
     throw createError(400, 'Too many files')
   }
 
+  if (body.role !== 'user') {
+    throw new Error('createMessage only accepts "user" messages')
+  }
+
   const { content, ...data } = utils.convertOAIToPrisma(body)
 
   const res = await prisma.message.create({

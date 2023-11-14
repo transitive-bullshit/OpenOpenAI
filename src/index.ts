@@ -2,6 +2,7 @@ import { promisify } from 'node:util'
 
 import { serve } from '@hono/node-server'
 import { OpenAPIHono } from '@hono/zod-openapi'
+import 'dotenv/config'
 import { asyncExitHook } from 'exit-hook'
 
 import assistantFiles from './assistant-files'
