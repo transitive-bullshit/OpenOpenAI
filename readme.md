@@ -179,7 +179,6 @@ GET       /openapi
 ## TODO
 
 - prefix ids (see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719))
-
 - get hosted redis working
 - hosted demo
 - handle locking thread and messages
