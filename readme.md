@@ -20,7 +20,7 @@
 
 **This project is a self-hosted version of OpenAI's new stateful Assistants API.** 💪
 
-All API route definitions and types are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official OpenAI API and your custom API simply by changing the `baseUrl`. 🤯
+All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official OpenAI API and your custom API simply by changing the `baseUrl`. 🤯
 
 This means that all API parameters, responses, and types are wire-compatible with the official OpenAI API, and the fact that they're auto-generated means that it will be relatively easy to keep them in sync over time.
 
