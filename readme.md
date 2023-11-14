@@ -96,7 +96,7 @@ cp .env.example .env
 
 ### Services
 
-The app is comprised of two services: a RESTful API server and an async task runner. Both services are stateless and can be scaled horizontally.
+The app is comprised of two services: a RESTful API **server** and an async task **runner**. Both services are stateless and can be scaled horizontally.
 
 There are two ways to run these services locally. The quickest way is via `tsx`:
 
@@ -122,7 +122,7 @@ npx tsx dist/runner
 
 ### E2E Example
 
-This will run an end-to-end assistant example, complete with custom tool invocation, using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
+This will run an [end-to-end assistant example](./e2e/index.ts), complete with custom tool invocation, using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
 
 ```bash
 npx tsx e2e
