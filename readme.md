@@ -98,9 +98,9 @@ cp .env.example .env
 
 ### Services
 
-The app is broken up into a RESTful API server and an async task runner.
+The app is comprised of a RESTful API server and an async task runner. Both services are stateless and can be scaled horizontally.
 
-There are two ways to run these services. The quick way is via `tsx`:
+There are two ways to run these services locally. The quick way is via `tsx`:
 
 ```bash
 # Start the REST API server in one shell
