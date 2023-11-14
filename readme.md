@@ -176,6 +176,8 @@ GET       /threads/:thread_id/runs/:run_id/steps/:step_id
 GET       /openapi
 ```
 
+You can view the server's auto-generated openapi spec by running the server and then visiting `http://localhost:3000/openapi`
+
 ## TODO
 
 - prefix ids (see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719))
