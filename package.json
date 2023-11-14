@@ -6,10 +6,10 @@
   "repository": "transitive-bullshit/OpenOpenAI",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@8.10.2",
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "pnpm@8.10.2",
   "scripts": {
     "build": "tsc --project tsconfig.dist.json",
     "postbuild": "resolve-tspaths --project tsconfig.dist.json",

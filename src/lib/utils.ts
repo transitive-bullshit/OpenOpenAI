@@ -215,7 +215,7 @@ export function convertAssistantToolsToChatMessageTools(
   })
 }
 
-export function convertAssistantToolCallsToChatMessage(
+export function convertAssistantToolCallsToChatMessages(
   toolCalls: RunStepDetailsToolCallsObject[]
 ): Prompt.Msg[] {
   return toolCalls.map((toolCall) => {

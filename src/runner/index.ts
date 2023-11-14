@@ -9,7 +9,7 @@ import type { RunStepDetailsToolCallsObject } from '~/generated/oai'
 import { type Run, type RunStep, prisma } from '~/lib/db'
 import type { JobData, JobResult } from '~/lib/types'
 import {
-  convertAssistantToolCallsToChatMessage,
+  convertAssistantToolCallsToChatMessages,
   convertAssistantToolsToChatMessageTools,
   deepMergeArray
 } from '~/lib/utils'
@@ -191,7 +191,7 @@ export const worker = new Worker<JobData, JobResult>(
         for (const runStep of runSteps) {
           if (runStep.type === 'tool_calls' && runStep.status === 'completed') {
             chatMessages = chatMessages.concat(
-              convertAssistantToolCallsToChatMessage(
+              convertAssistantToolCallsToChatMessages(
                 runStep.step_details!.tool_calls!
               )
             )
