@@ -103,7 +103,7 @@ async function main() {
       model: assistant.model,
       tools: assistant.tools
     })
-    assert(run)
+    assert(run?.id)
     console.log('created run', run)
 
     let listRunSteps = await openai.beta.threads.runs.steps.list(
@@ -117,7 +117,7 @@ async function main() {
       status: Run['status'],
       { intervalMs = 500 }: { intervalMs?: number } = {}
     ) {
-      assert(run)
+      assert(run?.id)
 
       return oraPromise(async () => {
         while (run.status !== status) {
@@ -128,7 +128,7 @@ async function main() {
 
           run = await openai.beta.threads.runs.retrieve(thread.id, run.id)
 
-          assert(run)
+          assert(run?.id)
         }
       }, `waiting for run "${run.id}" to have status "${status}"...`)
     }

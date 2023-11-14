@@ -224,7 +224,7 @@ export const worker = new Worker<JobData, JobResult>(
         }
 
         console.log(
-          `Runner "${job.id}" ${job.name} run "${run.id}": chat completion call`,
+          `Runner "${job.id}" ${job.name} run "${run.id}": >>> chat completion call`,
           {
             messages: chatMessages,
             model: assistant.model,
@@ -240,6 +240,11 @@ export const worker = new Worker<JobData, JobResult>(
           tools: convertAssistantToolsToChatMessageTools(assistant.tools)
         })
         const { message } = res
+
+        console.log(
+          `Runner "${job.id}" ${job.name} run "${run.id}": <<< chat completion call`,
+          res
+        )
 
         // Check for run cancellation or expiration
         if (await pollRunStatus()) {
@@ -353,11 +358,13 @@ export const worker = new Worker<JobData, JobResult>(
             )
           }
 
-          console.log(
-            `Runner "${job.id}" ${job.name} run "${run.id}": invoking ${
-              builtInToolCalls.length
-            } tool ${plur('call', builtInToolCalls.length)}`
-          )
+          if (builtInToolCalls.length > 0) {
+            console.log(
+              `Runner "${job.id}" ${job.name} run "${run.id}": invoking ${
+                builtInToolCalls.length
+              } tool ${plur('call', builtInToolCalls.length)}`
+            )
+          }
 
           // Handle retrieval and code_interpreter tool calls
           const toolResults: Record<string, any> = {}
@@ -508,7 +515,7 @@ export const worker = new Worker<JobData, JobResult>(
         }
 
         console.log(
-          `Runner "${job.id}" ${job.name} run "${runId}" job done with status "${run.status}"`
+          `Runner "${job.id}" ${job.name} run "${runId}" job done with run status "${run.status}"`
         )
 
         return {

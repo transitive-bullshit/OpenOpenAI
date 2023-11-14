@@ -286,7 +286,7 @@ app.openapi(routes.submitToolOuputsToRun, async (c) => {
       throw createHttpError(500, 'Invalid tool call type')
   }
 
-  return c.jsonT({ run_id, thread_id })
+  return c.jsonT(utils.convertPrismaToOAI(run))
 })
 
 app.openapi(routes.cancelRun, async (c) => {
