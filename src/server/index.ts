@@ -5,6 +5,7 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import 'dotenv/config'
 import { asyncExitHook } from 'exit-hook'
 
+import * as config from '~/lib/config'
 import { prisma } from '~/lib/db'
 import { queue } from '~/lib/queue'
 
@@ -52,6 +53,7 @@ app.route('', messageFiles)
 app.route('', runs)
 app.route('', runSteps)
 
+// TODO: these values should be taken from the source openapi spec
 app.doc('/openapi', {
   openapi: '3.0.0',
   info: {
@@ -63,6 +65,10 @@ app.doc('/openapi', {
 app.showRoutes()
 
 const server = serve(app)
+
+if (config.queue.startRunner) {
+  await import('~/runner/index')
+}
 
 asyncExitHook(
   async (signal: number) => {

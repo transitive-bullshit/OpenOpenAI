@@ -18,6 +18,8 @@ export namespace queue {
   // 10 minute timeout, including waiting for tool outputs
   export const stalledInterval = 10 * 60 * 1000
   export const threadRunJobName = 'thread-run'
+
+  export const startRunner = !!process.env.START_RUNNER
 }
 
 export namespace storage {

@@ -11,7 +11,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.dist.json",
     "prebuild": "run-s clean && prisma generate",
     "clean": "del dist",
     "dev": "tsc --watch",
