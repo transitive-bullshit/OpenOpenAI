@@ -101,6 +101,7 @@ export const worker = new Worker<JobData, JobResult>(
     }
 
     async function pollRunStatus({ strict = true }: { strict?: boolean } = {}) {
+      console.log('pollRunStatus', { strict })
       const run = await prisma.run.findUniqueOrThrow({
         where: { id: runId }
       })
@@ -251,6 +252,8 @@ export const worker = new Worker<JobData, JobResult>(
           return jobErrorResult!
         }
 
+        console.log('000')
+
         if (message.role !== 'assistant') {
           throw new Error(
             `Unexpected error during run "${runId}": last message should be an "assistant" message`
@@ -264,6 +267,7 @@ export const worker = new Worker<JobData, JobResult>(
           )
         } else if (Msg.isToolCall(message)) {
           let status = 'in_progress' as Run['status']
+          console.log('111')
 
           const toolCalls =
             message.tool_calls.map<RunStepDetailsToolCallsObject>(
@@ -435,10 +439,10 @@ export const worker = new Worker<JobData, JobResult>(
             }
 
             const completedAt = new Date()
-            const isCompleted = status !== 'requires_action'
+            const isRunStepCompleted = status !== 'requires_action'
 
-            // TODO: In-between steps, if isCompleted is `false`, we may have
-            // received `submit_tool_outputs` for some tools, so we need to
+            // TODO: In-between steps, if isRunStepCompleted is `false`, we may
+            // have received `submit_tool_outputs` for some tools, so we need to
             // include any possible external tool call updates in our update
             runStep = await prisma.runStep.findUniqueOrThrow({
               where: { id: runStep.id }
@@ -452,8 +456,8 @@ export const worker = new Worker<JobData, JobResult>(
             runStep = await prisma.runStep.update({
               where: { id: runStep.id },
               data: {
-                status: isCompleted ? 'completed' : undefined,
-                completed_at: isCompleted ? completedAt : undefined,
+                status: isRunStepCompleted ? 'completed' : undefined,
+                completed_at: isRunStepCompleted ? completedAt : undefined,
                 step_details: {
                   type: 'tool_calls',
                   tool_calls: mergedToolCalls
@@ -461,15 +465,19 @@ export const worker = new Worker<JobData, JobResult>(
               }
             })
 
-            // If `isCompleted`, we will now loop because run.status should be
-            // 'in_progress', else this job will finish with the run having
-            // 'requires_action' status
+            // If `isRunStepCompleted`, we will now loop because run.status
+            // should be 'in_progress', else this job will finish with the run
+            // having 'requires_action' status
+            if (isRunStepCompleted) {
+              continue
+            }
           } else {
             // The job will finish with the run having 'requires_action' status
           }
         } else {
           const completedAt = new Date()
 
+          console.log('creating new message', message)
           // TODO: handle annotations
           const newMessage = await prisma.message.create({
             data: {
@@ -487,6 +495,7 @@ export const worker = new Worker<JobData, JobResult>(
             }
           })
 
+          console.log('creating new runStep message_creation', newMessage.id)
           await prisma.runStep.create({
             data: {
               type: 'message_creation',
@@ -504,6 +513,7 @@ export const worker = new Worker<JobData, JobResult>(
             }
           })
 
+          console.log('updating run', run.id)
           run = await prisma.run.update({
             where: { id: run.id },
             data: { status: 'completed', completed_at: completedAt }
@@ -539,7 +549,7 @@ export const worker = new Worker<JobData, JobResult>(
 
         throw err
       }
-    } while (run.status === 'in_progress')
+    } while (true)
   },
   {
     connection: config.queue.redisConfig,
