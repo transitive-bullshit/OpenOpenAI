@@ -25,9 +25,7 @@ export const worker = new Worker<JobData, JobResult>(
     }
 
     const { runId } = job.data
-    console.log(
-      `Runner processing job "${job.id}" ${job.name} for run "${runId}"`
-    )
+    console.log(`Processing ${job.name} job "${job.id}" for run "${runId}"`)
     let jobErrorResult: JobResult | undefined
 
     async function checkRunStatus(
@@ -35,9 +33,7 @@ export const worker = new Worker<JobData, JobResult>(
       { strict = true }: { strict?: boolean } = {}
     ) {
       if (!run) {
-        console.error(
-          `Error runner "${job.id}" ${job.name}: Invalid run "${runId}"`
-        )
+        console.error(`Error job "${job.id}": Invalid run "${runId}"`)
         throw new Error(`Invalid run "${runId}"`)
       }
 
@@ -52,9 +48,7 @@ export const worker = new Worker<JobData, JobResult>(
           status: run.status
         }
 
-        console.warn(
-          `Runner "${job.id}" ${job.name}: run "${runId}" has been cancelled`
-        )
+        console.warn(`Job "${job.id}": run "${runId}" has been cancelled`)
         return jobErrorResult
       }
 
@@ -74,7 +68,7 @@ export const worker = new Worker<JobData, JobResult>(
         }
 
         console.error(
-          `Error runner "${job.id}" ${job.name}: invalid run "${runId}" status "${run.status}"`
+          `Error job "${job.id}": invalid run "${runId}" status "${run.status}"`
         )
         return jobErrorResult
       }
@@ -92,7 +86,7 @@ export const worker = new Worker<JobData, JobResult>(
           error: 'Run expired'
         }
 
-        console.warn(`Runner "${job.id}" ${job.name}: run "${runId}" expired`)
+        console.warn(`Job "${job.id}": run "${runId}" expired`)
         return jobErrorResult
       }
 
@@ -101,7 +95,6 @@ export const worker = new Worker<JobData, JobResult>(
     }
 
     async function pollRunStatus({ strict = true }: { strict?: boolean } = {}) {
-      console.log('pollRunStatus', { strict })
       const run = await prisma.run.findUniqueOrThrow({
         where: { id: runId }
       })
@@ -131,14 +124,14 @@ export const worker = new Worker<JobData, JobResult>(
 
         if (!thread) {
           console.error(
-            `Error runner "${job.id}" ${job.name}: Invalid run "${runId}": thread does not exist`
+            `Error job "${job.id}": Invalid run "${runId}": thread does not exist`
           )
           throw new Error(`Invalid run "${runId}": thread does not exist`)
         }
 
         if (!assistant) {
           console.error(
-            `Error runner "${job.id}" ${job.name}: Invalid run "${runId}": assistant does not exist`
+            `Error job "${job.id}": Invalid run "${runId}": assistant does not exist`
           )
           throw new Error(`Invalid run "${runId}": assistant does not exist`)
         }
@@ -225,7 +218,7 @@ export const worker = new Worker<JobData, JobResult>(
         }
 
         console.log(
-          `Runner "${job.id}" ${job.name} run "${run.id}": >>> chat completion call`,
+          `Job "${job.id}" run "${run.id}": >>> chat completion call`,
           {
             messages: chatMessages,
             model: assistant.model,
@@ -243,7 +236,7 @@ export const worker = new Worker<JobData, JobResult>(
         const { message } = res
 
         console.log(
-          `Runner "${job.id}" ${job.name} run "${run.id}": <<< chat completion call`,
+          `Job "${job.id}" run "${run.id}": <<< chat completion call`,
           res
         )
 
@@ -251,8 +244,6 @@ export const worker = new Worker<JobData, JobResult>(
         if (await pollRunStatus()) {
           return jobErrorResult!
         }
-
-        console.log('000')
 
         if (message.role !== 'assistant') {
           throw new Error(
@@ -267,7 +258,6 @@ export const worker = new Worker<JobData, JobResult>(
           )
         } else if (Msg.isToolCall(message)) {
           let status = 'in_progress' as Run['status']
-          console.log('111')
 
           const toolCalls =
             message.tool_calls.map<RunStepDetailsToolCallsObject>(
@@ -353,7 +343,7 @@ export const worker = new Worker<JobData, JobResult>(
             })
 
             console.log(
-              `Runner "${job.id}" ${job.name} run "${run.id}" status "${
+              `Job "${job.id}" run "${run.id}" status "${
                 run.status
               }" submit_tool_outputs waiting for ${
                 externalToolCalls.length
@@ -364,7 +354,7 @@ export const worker = new Worker<JobData, JobResult>(
 
           if (builtInToolCalls.length > 0) {
             console.log(
-              `Runner "${job.id}" ${job.name} run "${run.id}": invoking ${
+              `Job "${job.id}" run "${run.id}": invoking ${
                 builtInToolCalls.length
               } tool ${plur('call', builtInToolCalls.length)}`
             )
@@ -477,17 +467,18 @@ export const worker = new Worker<JobData, JobResult>(
         } else {
           const completedAt = new Date()
 
-          console.log('creating new message', message)
           // TODO: handle annotations
           const newMessage = await prisma.message.create({
             data: {
-              content: {
-                type: 'text',
-                text: {
-                  value: message.content!,
-                  annotations: []
+              content: [
+                {
+                  type: 'text',
+                  text: {
+                    value: message.content!,
+                    annotations: []
+                  }
                 }
-              },
+              ],
               role: message.role,
               assistant_id: assistant.id,
               thread_id: thread.id,
@@ -495,7 +486,6 @@ export const worker = new Worker<JobData, JobResult>(
             }
           })
 
-          console.log('creating new runStep message_creation', newMessage.id)
           await prisma.runStep.create({
             data: {
               type: 'message_creation',
@@ -513,7 +503,6 @@ export const worker = new Worker<JobData, JobResult>(
             }
           })
 
-          console.log('updating run', run.id)
           run = await prisma.run.update({
             where: { id: run.id },
             data: { status: 'completed', completed_at: completedAt }
@@ -525,7 +514,7 @@ export const worker = new Worker<JobData, JobResult>(
         }
 
         console.log(
-          `Runner "${job.id}" ${job.name} run "${runId}" job done with run status "${run.status}"`
+          `Job "${job.id}" run "${runId}" job done with run status "${run.status}"`
         )
 
         return {
@@ -533,10 +522,7 @@ export const worker = new Worker<JobData, JobResult>(
           status: run.status
         }
       } catch (err: any) {
-        console.error(
-          `Error runner "${job.id}" ${job.name} run "${runId}":`,
-          err
-        )
+        console.error(`Error job "${job.id}" run "${runId}":`, err)
 
         await prisma.run.update({
           where: { id: runId },

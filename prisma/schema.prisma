@@ -60,7 +60,7 @@ model AssistantFile {
   /// [AssistantFileObject]
   object       String @default("assistant.file")
 
-  assistant Assistant @relation(fields: [assistant_id], references: [id])
+  assistant Assistant @relation(fields: [assistant_id], references: [id], onDelete: Cascade)
 
   @@index([assistant_id, id])
 }
@@ -100,8 +100,8 @@ model Message {
 
   files MessageFile[]
 
-  thread    Thread     @relation(fields: [thread_id], references: [id])
-  assistant Assistant? @relation(fields: [assistant_id], references: [id])
+  thread    Thread     @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  assistant Assistant? @relation(fields: [assistant_id], references: [id], onDelete: Cascade)
   run       Run?       @relation(fields: [run_id], references: [id])
 }
 
@@ -114,7 +114,7 @@ model MessageFile {
   /// [MessageFileObject]
   object     String @default("thread.message.file")
 
-  message Message @relation(fields: [message_id], references: [id])
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
 }
 
 model Run {
@@ -147,8 +147,8 @@ model Run {
   messages  Message[]
   run_steps RunStep[]
 
-  thread    Thread    @relation(fields: [thread_id], references: [id])
-  assistant Assistant @relation(fields: [assistant_id], references: [id])
+  thread    Thread    @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  assistant Assistant @relation(fields: [assistant_id], references: [id], onDelete: Cascade)
 }
 
 model RunStep {
@@ -176,27 +176,28 @@ model RunStep {
   /// [RunStepObject]
   object       String        @default("thread.run.step")
 
-  thread    Thread    @relation(fields: [thread_id], references: [id])
-  assistant Assistant @relation(fields: [assistant_id], references: [id])
-  run       Run       @relation(fields: [run_id], references: [id])
+  thread    Thread    @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  assistant Assistant @relation(fields: [assistant_id], references: [id], onDelete: Cascade)
+  run       Run       @relation(fields: [run_id], references: [id], onDelete: Cascade)
 
   @@index([run_id])
   @@index([run_id, type])
 }
 
-model ToolCall {
-  id         String   @id @default(cuid())
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt @ignore
+// TODO: currently unused
+// model ToolCall {
+//   id         String   @id @default(cuid())
+//   created_at DateTime @default(now())
+//   updated_at DateTime @updatedAt @ignore
 
-  type     ToolCallType
-  /// [RunToolCall]
-  function Json
+//   type     ToolCallType
+//   /// [RunToolCall]
+//   function Json
 
-  assistant_id String
-  thread_id    String
-  run_id       String
-}
+//   assistant_id String
+//   thread_id    String
+//   run_id       String
+// }
 
 enum FileStatus {
   error

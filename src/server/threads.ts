@@ -51,7 +51,7 @@ app.openapi(routes.deleteThread, async (c) => {
   const { thread_id } = c.req.valid('param')
   console.log('deleteThread', { thread_id })
 
-  const res = await prisma.assistantFile.delete({
+  const res = await prisma.thread.delete({
     where: {
       id: thread_id
     }
