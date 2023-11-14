@@ -247,6 +247,7 @@ async function main() {
   }
 }
 
+// Make message content easier to read in the console
 function prettifyMessages(messages: any[]) {
   return messages.map((message) => ({
     ...message,
