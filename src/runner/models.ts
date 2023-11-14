@@ -6,5 +6,5 @@ import * as config from '~/lib/config'
 // TODO: support non-OpenAI models
 export const chatModel = new ChatModel({
   client: createOpenAIClient(),
-  debug: true // config.isDev
+  debug: config.isDev
 })
