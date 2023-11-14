@@ -81,7 +81,7 @@ cp .env.example .env
 - OpenAI
   - `OPENAI_API_KEY` - OpenAI API key for running the underlying chat completion calls
   - This is required for now, but depending on how interested people are, it won't be hard to add support for local models and other providers
-- Redis - Required to use
+- Redis
   - If you have a local redis instance running, you shouldn't need to set any env vars for redis
   - `REDIS_HOST` - Optional; defaults to `localhost`
   - `REDIS_PORT` - Optional; defaults to `6379`
