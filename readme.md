@@ -7,6 +7,7 @@
 </p>
 
 - [Intro](#intro)
+- [Why?](#why)
 - [Stack](#stack)
 - [Development](#development)
   - [Environment Variables](#environment-variables)
@@ -52,7 +53,7 @@ const assistant = await openai.beta.assistants.create({
 <details>
 <summary>Python example</summary>
 
-Here's an example using the official Python `openai` package:
+Here's the same example using the official Python `openai` package:
 
 ```py
 from openai import OpenAI
@@ -72,17 +73,7 @@ assistant = client.beta.assistants.create(
 
 </details>
 
-This unlocks all sorts of useful possibilities... including:
-
-- Using the OpenAI Assistants API with **custom models**
-- **Fully customizable RAG** via the built-in retrieval tool
-- Using a **custom code interpreter** like [open-interpreter](https://github.com/KillianLucas/open-interpreter)
-- **Self-hosting / on-premise** deployments of OpenAI-compatible Assistants
-- Full control over **assistant evals**
-- Developing & testing GPTs in a fully **sandboxed environment**
-- Sandboxed testing of **custom Actions** before deploying to the OpenAI "GPT Store"
-
-This project is not meant to be a full recreation of the entire OpenAI API. Rather, **it is focused only on the stateful portions of the new Assistants AP**I. It supports the following resources:
+Note that this project is not meant to be a full recreation of the entire OpenAI API. Rather, **it is focused only on the stateful portions of the new Assistants API**. The following resource types are supported:
 
 - Assistants
 - AssistantFiles
@@ -94,6 +85,22 @@ This project is not meant to be a full recreation of the entire OpenAI API. Rath
 - RunSteps
 
 See the official [OpenAI Assistants Guide](https://platform.openai.com/docs/assistants/how-it-works) for more info on how Assistants work.
+
+## Why?
+
+Being able to run your own, custom OpenAI Assistants that are **100% compatible with the official OpenAI Assistants** unlocks all sorts of useful possibilities:
+
+- Using OpenAI Assistants with **custom models** (OSS ftw!) 💪
+- **Fully customizable RAG** via the built-in retrieval tool (LangChain and LlamaIndex integrations [coming soon](https://github.com/transitive-bullshit/OpenOpenAI/issues/2))
+- Using a **custom code interpreter** like [open-interpreter](https://github.com/KillianLucas/open-interpreter) 🔥
+- **Self-hosting / on-premise** deployments of Assistants
+- Full control over **assistant evals**
+- Developing & testing GPTs in fully **sandboxed environments**
+- Sandboxed testing of **custom Actions** before deploying to the OpenAI "GPT Store"
+
+Most importantly, if the OpenAI "GPT Store" ends up gaining traction with ChatGPT's 100M weekly active users, then **the ability to reliably run, debug, and customize OpenAI-compatible Assistants** will end up being incredibly important in the future.
+
+I could even imagine a future Assistant store which is fully compatible with OpenAI's GPTs, but instead of relying on OpenAI as the gatekeeper, it could be **fully or partially decentralized**. 💯
 
 ## Stack
 
