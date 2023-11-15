@@ -13,8 +13,8 @@ import { z } from 'zod'
 import type { Run } from '~/lib/db'
 
 /**
- * This file is an end-to-end Assistants example using an external `get_weather`
- * function.
+ * This file contains an end-to-end Assistants example using an external
+ * `get_weather` function.
  *
  * To run it against the offical OpenAI API:
  * ```bash

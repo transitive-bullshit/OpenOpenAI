@@ -10,8 +10,8 @@ import { oraPromise } from 'ora'
 import type { Run } from '~/lib/db'
 
 /**
- * This file is an end-to-end Assistants example using the built-in `retrieval`
- * tool which summarizes an attached markdown file.
+ * This file contains an end-to-end Assistants example using the built-in
+ * `retrieval` tool which summarizes an attached markdown file.
  *
  * To run it against the offical OpenAI API:
  * ```bash
