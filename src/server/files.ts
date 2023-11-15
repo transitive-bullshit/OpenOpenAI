@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { sha256 } from 'crypto-hash'
-import { fileTypeFromBlob, fileTypeFromBuffer } from 'file-type'
+import { fileTypeFromBlob } from 'file-type'
 import createHttpError from 'http-errors'
 
 import * as routes from '~/generated/oai-routes'

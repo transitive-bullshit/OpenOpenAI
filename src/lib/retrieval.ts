@@ -24,6 +24,8 @@ export async function processFileForAssistant(file: File): Promise<void> {
 
   // TODO: encapsulate the getObject and key in a `files` module
   const object = await getObject(file.filename)
+  // @ts-expect-error TODO
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _ = await object.Body!.transformToString()
 
   // TODO: we're not actually pre-processing the file yet

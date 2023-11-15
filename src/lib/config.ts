@@ -3,6 +3,7 @@ import 'dotenv/config'
 
 export const env = process.env.NODE_ENV || 'development'
 export const isDev = env !== 'production'
+export const isCI = !!process.env.CI
 
 export const port = parseInt(process.env.PORT || '3000')
 export const processGracefulExitWaitTimeMs = 5000
@@ -49,7 +50,7 @@ export namespace queue {
 export namespace storage {
   export const bucket = process.env.S3_BUCKET!
 
-  if (!bucket) {
+  if (!bucket && !isCI) {
     throw new Error('process.env.S3_BUCKET is required')
   }
 }
