@@ -112,7 +112,7 @@ cp .env.example .env
 
 ### Services
 
-The app is comprised of two services: a RESTful API **server** and an async task **runner**. Both services are stateless and can be scaled horizontally.
+The app is composed of two services: a RESTful API **server** and an async task **runner**. Both services are stateless and can be scaled horizontally.
 
 There are two ways to run these services locally. The quickest way is via `tsx`:
 
