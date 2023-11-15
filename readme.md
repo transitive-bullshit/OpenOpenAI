@@ -31,13 +31,13 @@ Here's an example using the official Node.js `openai` package:
 ```ts
 import OpenAI from 'openai'
 
-// The only difference is the `baseURL` 🔥
 const openai = new OpenAI({
-  ap
+  // The only difference is the `baseURL` pointing to your custom API server 🔥
   baseURL: 'http//:localhost:3000'
 })
 
 // You can use the sdk as normal now for files and all beta assistant resources
+// (other endpoints are not currently supported)
 const assistant = await openai.beta.assistants.create({
   model: 'gpt-4-1106-preview',
   instructions: 'You are a helpful assistant.'
@@ -52,12 +52,12 @@ Here's an example using the official Python `openai` package:
 ```py
 from openai import OpenAI
 
-# The only difference is the `base_url`
 client = OpenAI(
     base_url: "http//:localhost:3000"
 )
 
 # You can use the sdk as normal now for files and all beta assistant resources
+# (other endpoints are not currently supported)
 assistant = client.beta.assistants.create(
     model="gpt-4-1106-preview",
     description="You are a helpful assistant."
