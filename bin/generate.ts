@@ -297,6 +297,8 @@ async function main() {
     .replaceAll(/z\s*\.enum\(\[\s*('[^']*')\s*\]\)/gm, 'z.literal($1)')
     // temporary bug fix for zod-openapi not recognizing numbers in query params
     .replaceAll('limit: z.number().optional()', 'limit: z.string().optional()')
+    // fix for [CreateFileRequestSchema](https://github.com/openai/openai-openapi/issues/123)
+    .replace(/\bfile: z.string\(\)/, 'file: z.any()')
 
   const prettySchemasSource = prettify(prettySchemasSource0)
   await fs.writeFile(destFileSchemas, prettySchemasSource)

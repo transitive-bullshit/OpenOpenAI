@@ -283,7 +283,7 @@ export const DeleteFileResponseSchema = z.object({
 export type DeleteFileResponse = z.infer<typeof DeleteFileResponseSchema>
 
 export const CreateFileRequestSchema = z.object({
-  file: z.string(),
+  file: z.any(),
   purpose: CreateFileRequestPurposeSchema
 })
 export type CreateFileRequest = z.infer<typeof CreateFileRequestSchema>

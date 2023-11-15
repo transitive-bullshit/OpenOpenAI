@@ -1,4 +1,9 @@
-import { Msg, type Prompt, extractJsonObject } from '@dexaai/dexter/prompt'
+import {
+  Msg,
+  type Prompt,
+  extractJsonObject,
+  extractZodObject
+} from '@dexaai/dexter/prompt'
 import { Worker } from 'bullmq'
 import { asyncExitHook } from 'exit-hook'
 import { signalsByNumber } from 'human-signals'
@@ -6,16 +11,20 @@ import pMap from 'p-map'
 import plur from 'plur'
 
 import * as config from '~/lib/config'
+import * as retrieval from '~/lib/retrieval'
 import type { RunStepDetailsToolCallsObject } from '~/generated/oai'
-import { type Run, type RunStep, prisma } from '~/lib/db'
+import { type File, type Run, type RunStep, prisma } from '~/lib/db'
 import type { JobData, JobResult } from '~/lib/types'
 import {
   convertAssistantToolCallsToChatMessages,
   convertAssistantToolsToChatMessageTools,
-  deepMergeArray
+  deepMergeArray,
+  getNormalizedFileName
 } from '~/lib/utils'
 
 import { chatModel } from './models'
+
+// TODO: prevent run from infinite looping
 
 export const worker = new Worker<JobData, JobResult>(
   config.queue.name,
@@ -104,6 +113,7 @@ export const worker = new Worker<JobData, JobResult>(
 
     let run: Run
     let runStep: RunStep
+    let files: File[] | undefined
 
     do {
       try {
@@ -134,6 +144,16 @@ export const worker = new Worker<JobData, JobResult>(
             `Error job "${job.id}": Invalid run "${runId}": assistant does not exist`
           )
           throw new Error(`Invalid run "${runId}": assistant does not exist`)
+        }
+
+        if (!files) {
+          files = await prisma.file.findMany({
+            where: {
+              id: {
+                in: run.file_ids
+              }
+            }
+          })
         }
 
         const startedAt = new Date()
@@ -201,10 +221,25 @@ export const worker = new Worker<JobData, JobResult>(
           })
           .filter(Boolean)
 
-        if (assistant.instructions) {
-          chatMessages = [
-            Msg.system(assistant.instructions) as Prompt.Msg
-          ].concat(chatMessages)
+        // const isCodeInterpreterEnabled = run.tools?.some((tool) => tool.type === 'code_interpreter')
+        const isRetrievalEnabled =
+          run.tools?.some((tool) => tool.type === 'retrieval') && files.length
+
+        // TODO: custom code interpreter instructions
+        const assistantSystemtMessage: Prompt.Msg = Msg.system(
+          `${run.instructions ? `${run.instructions}\n\n` : ''}${
+            isRetrievalEnabled
+              ? `You can use the "retrieval" tool to retrieve relevant context from the following attached files:\n${files
+                  .map((file) => '- ' + getNormalizedFileName(file))
+                  .join(
+                    '\n'
+                  )}\nMake sure to be extremely concise when using attached files.`
+              : ''
+          }`
+        )
+
+        if (assistantSystemtMessage.content) {
+          chatMessages = [assistantSystemtMessage].concat(chatMessages)
         }
 
         for (const runStep of runSteps) {
@@ -217,22 +252,22 @@ export const worker = new Worker<JobData, JobResult>(
           }
         }
 
+        const chatCompletionParams: Parameters<typeof chatModel.run>[0] = {
+          messages: chatMessages,
+          model: assistant.model,
+          tools: convertAssistantToolsToChatMessageTools(assistant.tools),
+          tool_choice:
+            runSteps.length >= config.runs.maxRunSteps ? 'none' : 'auto'
+        }
+
         console.log(
           `Job "${job.id}" run "${run.id}": >>> chat completion call`,
-          {
-            messages: chatMessages,
-            model: assistant.model,
-            tools: convertAssistantToolsToChatMessageTools(assistant.tools)
-          }
+          chatCompletionParams
         )
 
         // Invoke the chat model with the thread context, asssistant config,
         // any tool outputs from previous run steps, and available tools
-        const res = await chatModel.run({
-          messages: chatMessages,
-          model: assistant.model,
-          tools: convertAssistantToolsToChatMessageTools(assistant.tools)
-        })
+        const res = await chatModel.run(chatCompletionParams)
         const { message } = res
 
         console.log(
@@ -365,22 +400,46 @@ export const worker = new Worker<JobData, JobResult>(
 
           await pMap(
             message.tool_calls,
+            // eslint-disable-next-line no-loop-func
             async (toolCall) => {
               if (toolCall.function.name === 'retrieval') {
-                // TODO: retrieval implementation
-                console.error('TODO: retrieval implementation')
-                toolResults[toolCall.id] = [
+                const args = extractZodObject({
+                  schema: retrieval.retrievalFunction.argsSchema,
+                  json: toolCall.function.arguments
+                })
+
+                console.log(
+                  `Job "${job.id}" run "${run.id}": <<< invoking "retrieval" tool`,
                   {
-                    type: 'logs',
-                    logs: 'Error: retrieval is not yet implemented'
+                    ...args,
+                    files
                   }
-                ]
+                )
+
+                const outputs = await retrieval.retrievalTool({
+                  ...args,
+                  files: files!
+                })
+
+                console.log(
+                  `Job "${job.id}" run "${run.id}": >>> "retrieval" tool`,
+                  {
+                    ...args,
+                    files
+                  },
+                  outputs
+                )
+
+                toolResults[toolCall.id] = outputs
               } else if (toolCall.function.name === 'code_interpreter') {
                 // TODO: code_interpreter implementation
                 console.error('TODO: code_interpreter implementation')
-                toolResults[toolCall.id] = {
-                  error: 'Error: code_interpreter is not yet implemented'
-                }
+                toolResults[toolCall.id] = [
+                  {
+                    type: 'logs',
+                    logs: 'Error: code_interpreter is not yet implemented'
+                  }
+                ]
               } else {
                 // `function` implementation is handled by the third-party developer
                 // via `submit_tool_outputs`

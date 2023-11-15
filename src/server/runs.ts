@@ -33,7 +33,7 @@ app.openapi(routes.createThreadAndRun, async (c) => {
   const body = c.req.valid('json')
   console.log('createThreadAndRun', { body })
 
-  await prisma.assistant.findUniqueOrThrow({
+  const assistant = await prisma.assistant.findUniqueOrThrow({
     where: {
       id: body.assistant_id
     }
@@ -45,6 +45,9 @@ app.openapi(routes.createThreadAndRun, async (c) => {
   const now = new Date().getTime()
   const run = await prisma.run.create({
     data: {
+      // @ts-ignore tools may be overridden by params
+      tools: assistant.tools,
+      file_ids: assistant.file_ids,
       ...utils.convertOAIToPrisma(data),
       thread_id: thread.id,
       status: 'queued' as const,
@@ -71,7 +74,7 @@ app.openapi(routes.createRun, async (c) => {
   console.log('createRun', { thread_id, body })
 
   // Ensure the assistant exists
-  await prisma.assistant.findUniqueOrThrow({
+  const assistant = await prisma.assistant.findUniqueOrThrow({
     where: { id: body.assistant_id }
   })
 
@@ -83,6 +86,9 @@ app.openapi(routes.createRun, async (c) => {
   const now = new Date().getTime()
   const run = await prisma.run.create({
     data: {
+      // @ts-ignore tools may be overridden by params
+      tools: assistant.tools,
+      file_ids: assistant.file_ids,
       ...utils.convertOAIToPrisma(body),
       thread_id,
       status: 'queued' as const,

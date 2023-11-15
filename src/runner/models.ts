@@ -1,5 +1,4 @@
 import { ChatModel, createOpenAIClient } from '@dexaai/dexter/model'
-import 'dotenv/config'
 
 import * as config from '~/lib/config'
 

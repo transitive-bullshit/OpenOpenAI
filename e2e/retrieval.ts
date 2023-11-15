@@ -1,29 +1,26 @@
 import assert from 'node:assert'
+import fs from 'node:fs'
 
-import { createAIFunction } from '@dexaai/dexter/prompt'
 import { sha256 } from 'crypto-hash'
 import delay from 'delay'
 import 'dotenv/config'
 import OpenAI from 'openai'
 import { oraPromise } from 'ora'
-import pMap from 'p-map'
-import plur from 'plur'
-import { z } from 'zod'
 
 import type { Run } from '~/lib/db'
 
 /**
- * This file is an end-to-end Assistants example using an external `get_weather`
- * function.
+ * This file is an end-to-end Assistants example using the built-in `retrieval`
+ * tool which summarizes an attached markdown file.
  *
  * To run it against the offical OpenAI API:
  * ```bash
- * npx tsx e2e
+ * npx tsx e2e/retrieval.ts
  * ```
  *
  * To run it against your custom, local API:
  * ```bash
- * OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e
+ * OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e/retrieval.ts
  * ```
  */
 async function main() {
@@ -44,39 +41,19 @@ async function main() {
     baseURL: baseUrl
   })
 
-  const getWeather = createAIFunction(
-    {
-      name: 'get_weather',
-      description: 'Gets the weather for a given location',
-      argsSchema: z.object({
-        location: z
-          .string()
-          .describe('The city and state e.g. San Francisco, CA'),
-        unit: z
-          .enum(['c', 'f'])
-          .optional()
-          .default('f')
-          .describe('The unit of temperature to use')
-      })
-    },
-    // Fake weather API implementation which returns a random temperature
-    // after a short delay
-    async function getWeather(args) {
-      await delay(500)
-
-      return {
-        location: args.location,
-        unit: args.unit,
-        temperature: (Math.random() * 100) | 0
-      }
-    }
-  )
-
   let assistant: Awaited<
     ReturnType<typeof openai.beta.assistants.create>
   > | null = null
   let thread: Awaited<ReturnType<typeof openai.beta.threads.create>> | null =
     null
+
+  const readmeFileStream = fs.createReadStream('readme.md', 'utf8')
+
+  const readmeFile = await openai.files.create({
+    file: readmeFileStream,
+    purpose: 'assistants'
+  })
+  console.log('created readme file', readmeFile)
 
   try {
     assistant = await openai.beta.assistants.create({
@@ -85,10 +62,10 @@ async function main() {
       metadata,
       tools: [
         {
-          type: 'function',
-          function: getWeather.spec
+          type: 'retrieval'
         }
-      ]
+      ],
+      file_ids: [readmeFile.id]
     })
     assert(assistant)
     console.log('created assistant', assistant)
@@ -98,7 +75,8 @@ async function main() {
       messages: [
         {
           role: 'user',
-          content: 'What is the weather in San Francisco today?',
+          content:
+            'Give me a concise summary of the attached file using markdown.',
           metadata
         }
       ]
@@ -135,6 +113,18 @@ async function main() {
 
       return oraPromise(async () => {
         while (run.status !== status) {
+          if (
+            status !== run.status &&
+            (run.status === 'cancelled' ||
+              run.status === 'cancelling' ||
+              run.status === 'failed' ||
+              run.status === 'expired')
+          ) {
+            throw new Error(
+              `Error run "${run.id}" status reached terminal status "${run.status}" while waiting for status "${status}"`
+            )
+          }
+
           await delay(intervalMs)
 
           assert(thread?.id)
@@ -146,87 +136,6 @@ async function main() {
         }
       }, `waiting for run "${run.id}" to have status "${status}"...`)
     }
-
-    await waitForRunStatus('requires_action')
-    console.log('run', run)
-
-    listRunSteps = await openai.beta.threads.runs.steps.list(thread.id, run.id)
-    assert(listRunSteps?.data)
-    console.log('runSteps', listRunSteps.data)
-
-    if (run.status !== 'requires_action') {
-      throw new Error(
-        `run "${run.id}" status expected to be "requires_action"; found "${run.status}"`
-      )
-    }
-
-    if (!run.required_action) {
-      throw new Error(
-        `run "${run.id}" expected to have "required_action"; none found`
-      )
-    }
-
-    if (run.required_action.type !== 'submit_tool_outputs') {
-      throw new Error(
-        `run "${run.id}" expected to have "required_action.type" of "submit_tool_outputs; found "${run.required_action.type}"`
-      )
-    }
-
-    if (!run.required_action.submit_tool_outputs?.tool_calls?.length) {
-      throw new Error(
-        `run "${run.id}" expected to have non-empty "required_action.submit_tool_outputs"`
-      )
-    }
-
-    // Resolve tool calls
-    const toolCalls = run.required_action.submit_tool_outputs.tool_calls
-
-    const toolOutputs = await oraPromise(
-      pMap(
-        toolCalls,
-        async (toolCall) => {
-          if (toolCall.type !== 'function') {
-            throw new Error(
-              `run "${run.id}" invalid submit_tool_outputs tool_call type "${toolCall.type}"`
-            )
-          }
-
-          if (!toolCall.function) {
-            throw new Error(
-              `run "${run.id}" invalid submit_tool_outputs tool_call function"`
-            )
-          }
-
-          if (toolCall.function.name !== getWeather.spec.name) {
-            throw new Error(
-              `run "${run.id}" invalid submit_tool_outputs tool_call function name "${toolCall.function.name}"`
-            )
-          }
-
-          const toolCallResult = await getWeather(toolCall.function.arguments)
-          return {
-            output: JSON.stringify(toolCallResult),
-            tool_call_id: toolCall.id
-          }
-        },
-        { concurrency: 4 }
-      ),
-      `run "${run.id}" resolving ${toolCalls.length} tool ${plur(
-        'call',
-        toolCalls.length
-      )}`
-    )
-
-    console.log(`submitting tool outputs for run "${run.id}"`, toolOutputs)
-    run = await openai.beta.threads.runs.submitToolOutputs(thread.id, run.id, {
-      tool_outputs: toolOutputs
-    })
-    assert(run)
-    console.log('run', run)
-
-    listRunSteps = await openai.beta.threads.runs.steps.list(thread.id, run.id)
-    assert(listRunSteps?.data)
-    console.log('runSteps', listRunSteps.data)
 
     await waitForRunStatus('completed')
     console.log('run', run)

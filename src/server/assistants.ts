@@ -1,4 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
+import createHttpError from 'http-errors'
 
 import * as routes from '~/generated/oai-routes'
 import * as utils from '~/lib/utils'
@@ -20,25 +21,44 @@ app.openapi(routes.createAssistant, async (c) => {
   const body = c.req.valid('json')
   console.log('createAssistant', { body })
 
-  const res = await prisma.assistant.create({
+  if (body.file_ids?.length) {
+    const hasRetrieval = body.tools?.some((tool) => tool.type === 'retrieval')
+    const hasCodeInterpreter = body.tools?.some(
+      (tool) => tool.type === 'code_interpreter'
+    )
+
+    if (!hasRetrieval && !hasCodeInterpreter) {
+      throw createHttpError(
+        400,
+        'file_ids are only supported if retrieval or code_interpreter tools are enabled.'
+      )
+    }
+
+    // TODO: check file_ids exist
+    // TODO: check file_ids have purpose `assistants` or have an attached `AssistantFile`?
+    // NOTE: These checks are probably overkill, and for our use case, it's likely
+    // better to err on the side of being more permissive.
+  }
+
+  const assistant = await prisma.assistant.create({
     data: utils.convertOAIToPrisma(body)
   })
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  return c.jsonT(utils.convertPrismaToOAI(assistant))
 })
 
 app.openapi(routes.getAssistant, async (c) => {
   const { assistant_id } = c.req.valid('param')
   console.log('getAssistant', { assistant_id })
 
-  const res = await prisma.assistant.findUniqueOrThrow({
+  const assistant = await prisma.assistant.findUniqueOrThrow({
     where: {
       id: assistant_id
     }
   })
-  if (!res) return c.notFound() as any
+  if (!assistant) return c.notFound() as any
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  return c.jsonT(utils.convertPrismaToOAI(assistant))
 })
 
 app.openapi(routes.modifyAssistant, async (c) => {
@@ -46,31 +66,31 @@ app.openapi(routes.modifyAssistant, async (c) => {
   const body = c.req.valid('json')
   console.log('modifyAssistant', { assistant_id, body })
 
-  const res = await prisma.assistant.update({
+  const assistant = await prisma.assistant.update({
     where: {
       id: assistant_id
     },
     data: utils.convertOAIToPrisma(body)
   })
-  if (!res) return c.notFound() as any
+  if (!assistant) return c.notFound() as any
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  return c.jsonT(utils.convertPrismaToOAI(assistant))
 })
 
 app.openapi(routes.deleteAssistant, async (c) => {
   const { assistant_id } = c.req.valid('param')
   console.log('deleteAssistant', { assistant_id })
 
-  const res = await prisma.assistant.delete({
+  const assistant = await prisma.assistant.delete({
     where: {
       id: assistant_id
     }
   })
-  if (!res) return c.notFound() as any
+  if (!assistant) return c.notFound() as any
 
   return c.jsonT({
     deleted: true,
-    id: res.id,
+    id: assistant.id,
     object: 'assistant.deleted' as const
   })
 })

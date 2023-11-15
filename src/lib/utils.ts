@@ -9,6 +9,8 @@ import {
   type RunStepDetailsToolCallsObject
 } from '~/generated/oai'
 
+import * as retrieval from './retrieval'
+import type { File } from './db'
 import './prisma-json-types.d.ts'
 
 export type OAITypeToPrismaType<T extends Record<string, unknown>> = Simplify<
@@ -198,11 +200,7 @@ export function convertAssistantToolToChatMessageTool(
     case 'retrieval':
       return {
         type: 'function',
-        function: {
-          name: 'retrieval',
-          description: 'TODO', // TODO
-          parameters: {} // TODO
-        }
+        function: retrieval.retrievalFunction.spec
       }
 
     case 'code_interpreter':
@@ -295,4 +293,10 @@ export function convertAssistantToolCallsToChatMessages(
   })
 
   return [toolCallMessage as Prompt.Msg].concat(toolCallResults)
+}
+
+export function getNormalizedFileName(file: File) {
+  // File names are prefixed by a content hash for uniqueness when stored to S3,
+  // but we don't want to include this hash in the file names shown to the user.
+  return file.filename.split('-').slice(1).join('-')
 }

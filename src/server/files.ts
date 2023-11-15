@@ -1,12 +1,13 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { sha256 } from 'crypto-hash'
-import { fileTypeFromBuffer } from 'file-type'
+import { fileTypeFromBlob, fileTypeFromBuffer } from 'file-type'
 import createHttpError from 'http-errors'
 
 import * as routes from '~/generated/oai-routes'
 import * as storage from '~/lib/storage'
 import * as utils from '~/lib/utils'
 import { prisma } from '~/lib/db'
+import { processFileForAssistant } from '~/lib/retrieval'
 
 const app: OpenAPIHono = new OpenAPIHono()
 
@@ -31,44 +32,66 @@ app.openapi(routes.createFile, async (c) => {
   const body = c.req.valid('form')
   console.log('createFile', { body })
 
-  const { file, purpose } = body
+  const { file: data, purpose } = body
+  const dataAsFile = data as File
+  const dataAsArrayBuffer = await dataAsFile.arrayBuffer()
+  const dataAsUint8Array = new Uint8Array(dataAsArrayBuffer)
 
-  const fileAsBuffer = Buffer.from(file, 'binary')
-  const fileType = await fileTypeFromBuffer(fileAsBuffer)
-  const fileName = `${sha256(file)}${fileType?.ext ? `.${fileType.ext}` : ''}`
+  const fileType = await fileTypeFromBlob(dataAsFile)
+  const fileHash = await sha256(dataAsArrayBuffer)
+  const fileName = `${fileHash}${
+    dataAsFile.name
+      ? `-${dataAsFile.name}`
+      : fileType?.ext
+      ? `.${fileType.ext}`
+      : ''
+  }`
   const contentType = fileType?.mime || 'application/octet-stream'
 
-  await storage.putObject(fileName, fileAsBuffer, {
+  const res = await storage.putObject(fileName, dataAsUint8Array, {
     ContentType: contentType
   })
+  console.log('uploaded file', fileName, res)
 
-  const res = await prisma.file.create({
+  let file = await prisma.file.create({
     data: {
       filename: fileName,
       status: 'uploaded',
-      bytes: fileAsBuffer.byteLength,
+      bytes: dataAsArrayBuffer.byteLength,
       purpose
     }
   })
-  if (!res) return c.notFound() as any
+  if (!file) return c.notFound() as any
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  if (purpose === 'assistants') {
+    // Process file for assistant (knowledge retrieval pre-processing)
+    await processFileForAssistant(file)
+
+    if (file.status !== 'uploaded') {
+      file = await prisma.file.update({
+        where: { id: file.id },
+        data: file
+      })
+    }
+  }
+
+  return c.jsonT(utils.convertPrismaToOAI(file))
 })
 
 app.openapi(routes.deleteFile, async (c) => {
   const { file_id } = c.req.valid('param')
   console.log('deleteFile', { file_id })
 
-  const res = await prisma.file.delete({
+  const file = await prisma.file.delete({
     where: {
       id: file_id
     }
   })
-  if (!res) return c.notFound() as any
+  if (!file) return c.notFound() as any
 
   return c.jsonT({
     deleted: true,
-    id: res.id,
+    id: file.id,
     object: 'file' as const
   })
 })
@@ -77,28 +100,28 @@ app.openapi(routes.retrieveFile, async (c) => {
   const { file_id } = c.req.valid('param')
   console.log('retrieveFile', { file_id })
 
-  const res = await prisma.file.findUniqueOrThrow({
+  const file = await prisma.file.findUniqueOrThrow({
     where: {
       id: file_id
     }
   })
-  if (!res) return c.notFound() as any
+  if (!file) return c.notFound() as any
 
-  return c.jsonT(utils.convertPrismaToOAI(res))
+  return c.jsonT(utils.convertPrismaToOAI(file))
 })
 
 app.openapi(routes.downloadFile, async (c) => {
   const { file_id } = c.req.valid('param')
   console.log('downloadFile', { file_id })
 
-  const res = await prisma.file.findUniqueOrThrow({
+  const file = await prisma.file.findUniqueOrThrow({
     where: {
       id: file_id
     }
   })
-  if (!res) return c.notFound() as any
+  if (!file) return c.notFound() as any
 
-  const object = await storage.getObject(res.filename)
+  const object = await storage.getObject(file.filename)
   // TODO: what encoding should we use here? it's not specified by the spec
   const body = await object.Body?.transformToString()
   if (!body) {

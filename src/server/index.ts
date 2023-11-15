@@ -21,8 +21,13 @@ const app = new OpenAPIHono()
 
 app.use('*', async function errorHandler(c, next) {
   try {
+    // Useful for debugging
+    // const body = await c.req.formData()
+    // console.log(body.get('file'))
+
     await next()
   } catch (err: any) {
+    console.error('ERROR', err.message)
     const statusCode = err.statusCode || err.status
 
     // handle https://github.com/jshttp/http-errors
@@ -36,6 +41,10 @@ app.use('*', async function errorHandler(c, next) {
 
     // handle prisma errors
     if (err.code === 'P2025') {
+      return c.notFound() as any
+    }
+
+    if (err.$metadata?.httpStatusCode === 404) {
       return c.notFound() as any
     }
 
@@ -60,8 +69,6 @@ app.doc('/openapi', {
     title: 'OpenAPI'
   }
 })
-
-app.showRoutes()
 
 const server = serve({
   fetch: app.fetch,
