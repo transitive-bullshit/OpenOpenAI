@@ -218,7 +218,7 @@ You can view the server's auto-generated openapi spec by running the server and 
 
 **Status**: All API routes have been tested side-by-side with the official OpenAI API and are working as expected. The only missing features at the moment are support for the built-in `code_interpreter` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/3)) and support for non-text files with the built-in `retrieval` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/2)). All other functionality should be fully supported and wire-compatible with the official API.
 
-TODO:
+**TODO**:
 
 - hosted demo (bring your own OpenAI API key?)
 - prefix ids
