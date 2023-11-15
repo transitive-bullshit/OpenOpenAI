@@ -23,7 +23,7 @@
 
 **This project is a self-hosted version of OpenAI's new stateful Assistants API.** 💪
 
-All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so all it takes to switch between the official API and your custom API is changing the `baseUrl`. 🤯
+All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so all it takes to switch between the official API and your custom API is changing the `baseURL`. 🤯
 
 This means that all API parameters, responses, and types are wire-compatible with the official OpenAI API, and the fact that they're auto-generated means that it will be relatively easy to keep them in sync over time.
 
@@ -32,8 +32,8 @@ Here's an example using the official Node.js `openai` package:
 ```ts
 import OpenAI from 'openai'
 
+// The only difference is the `baseURL` pointing to your custom API server 🔥
 const openai = new OpenAI({
-  // The only difference is the `baseURL` pointing to your custom API server 🔥
   baseURL: 'http//:localhost:3000'
 })
 
