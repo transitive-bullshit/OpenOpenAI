@@ -140,7 +140,9 @@ npx tsx dist/runner
 
 #### Custom Function Example
 
-You can run an [end-to-end assistant example which uses a custom `get_weather` function](./e2e/index.ts), using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
+[This example](./e2e/index.ts) contains an end-to-end assistant script which uses a custom `get_weather` function.
+
+You can run it using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
 
 ```bash
 npx tsx e2e
@@ -156,7 +158,9 @@ It's pretty cool to see both test suites running the exact same Assistants code 
 
 #### Retrieval Tool Example
 
-You can run an [end-to-end assistant example which uses the built-in `retrieval` tool](./e2e/retrieval.ts), using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
+[This example](./e2e/retrieval.ts) contains an end-to-end assistant script which uses the built-in `retrieval` tool with this `readme.md` file as an attachment.
+
+You can run it using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
 
 ```bash
 npx tsx e2e/retrieval.ts
