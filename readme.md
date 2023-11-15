@@ -90,7 +90,7 @@ cp .env.example .env
   - You'll need to run `npx prisma db push` to set up your database according to our [prisma schema](./prisma/schema.prisma)
 - **OpenAI**
   - `OPENAI_API_KEY` - OpenAI API key for running the underlying chat completion calls
-  - This is required for now, but depending on how interested people are, it won't be hard to add support for local models and other providers
+  - This is required for now, but depending on [how interested people are](https://github.com/transitive-bullshit/OpenOpenAI/issues/1), it won't be hard to add support for local models and other providers
 - **Redis**
   - [On macOS](https://redis.io/docs/install/install-redis/install-redis-on-mac-os/): `brew install redis && brew services start redis`
   - If you have a local redis instance running, the default redis env vars should work without touching them
