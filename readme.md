@@ -36,7 +36,7 @@ This unlocks all sorts of useful possibilities... including:
 - Developing & testing GPTs in a fully **sandboxed environment**
 - Sandboxed testing of **custom Actions** before deploying to the OpenAI "GPT Store"
 
-This project is not meant to be a full recreation of the entire OpenAI API. Rather, it is focused on the stateful portions of the new Assistants API. It supports the following resources:
+This project is not meant to be a full recreation of the entire OpenAI API. Rather, **it is focused only on the stateful portions of the new Assistants AP**I. It supports the following resources:
 
 - Assistants
 - AssistantFiles
@@ -72,26 +72,38 @@ Install deps:
 pnpm install
 ```
 
+Generate the prisma types locally:
+
+```bash
+pnpm generate
+```
+
 ### Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-- Postgres
+- **Postgres**
   - `DATABASE_URL` - Postgres connection string
-- OpenAI
+  - [On macOS](https://wiki.postgresql.org/wiki/Homebrew): `brew install postgresql && brew services start postgresql`
+  - You'll need to run `npx prisma db push` to set up your database according to our [prisma schema](./prisma/schema.prisma)
+- **OpenAI**
   - `OPENAI_API_KEY` - OpenAI API key for running the underlying chat completion calls
   - This is required for now, but depending on how interested people are, it won't be hard to add support for local models and other providers
-- Redis
-  - If you have a local redis instance running, you shouldn't need to set any env vars for redis
+- **Redis**
+  - [On macOS](https://redis.io/docs/install/install-redis/install-redis-on-mac-os/): `brew install redis && brew services start redis`
+  - If you have a local redis instance running, the default redis env vars should work without touching them
   - `REDIS_HOST` - Optional; defaults to `localhost`
   - `REDIS_PORT` - Optional; defaults to `6379`
   - `REDIS_USERNAME` - Optional; defaults to `default`
   - `REDIS_PASSWORD` - Optional
-- S3 - Required to use file attachments
+- **S3** - Required to use file attachments
   - Any S3-compatible provider is supported, such as [Cloudflare R2](https://developers.cloudflare.com/r2/)
-  - Seriously, just use R2 – it's amazing!
+  - Alterantively, you can use a local S3 server like [MinIO](https://github.com/minio/minio#homebrew-recommended) or [LocalStack](https://github.com/localstack/localstack)
+    - To run LocalStack on macOS: `brew install localstack/tap/localstack-cli && localstack start -d`
+    - To run MinIO macOS: `brew install minio/stable/minio && minio server /data`
+  - I recommend using Cloudflare R2, though – it's amazing and should be free for most use cases!
   - `S3_BUCKET` - Required
   - `S3_REGION` - Optional; defaults to `auto`
   - `S3_ENDPOINT` - Required; example: `https://<id>.r2.cloudflarestorage.com`
