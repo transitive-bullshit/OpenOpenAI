@@ -238,3 +238,5 @@ You can view the server's auto-generated openapi spec by running the server and 
 ## License
 
 MIT © [Travis Fischer](https://transitivebullsh.it)
+
+If you found this project useful, please consider [sponsoring me](https://github.com/sponsors/transitive-bullshit) or <a href="https://twitter.com/transitive_bs">following me on twitter <img src="https://storage.googleapis.com/saasify-assets/twitter-logo.svg" alt="twitter" height="24px" align="center"></a>
