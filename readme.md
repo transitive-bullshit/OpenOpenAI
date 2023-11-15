@@ -11,7 +11,9 @@
 - [Development](#development)
   - [Environment Variables](#environment-variables)
   - [Services](#services)
-  - [E2E Example](#e2e-example)
+  - [E2E Examples](#e2e-examples)
+    - [Custom Function Example](#custom-function-example)
+    - [Retrieval Tool Example](#retrieval-tool-example)
   - [Server routes](#server-routes)
 - [TODO](#todo)
 - [License](#license)
@@ -44,6 +46,8 @@ This project is not meant to be a full recreation of the entire OpenAI API. Rath
 - Threads
 - Runs
 - RunSteps
+
+See the official [OpenAI Assistants Guide](https://platform.openai.com/docs/assistants/how-it-works) for more info on how Assistants work.
 
 ## Stack
 
@@ -120,9 +124,11 @@ npx tsx dist/server
 npx tsx dist/runner
 ```
 
-### E2E Example
+### E2E Examples
 
-This will run an [end-to-end assistant example](./e2e/index.ts), complete with custom tool invocation, using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
+#### Custom Function Example
+
+You can run an [end-to-end assistant example which uses a custom `get_weather` function](./e2e/index.ts), using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
 
 ```bash
 npx tsx e2e
@@ -135,6 +141,24 @@ OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e
 ```
 
 It's pretty cool to see both test suites running the exact same Assistants code using the official OpenAI Node.js client – without any noticeable differences between the two versions. Huzzah! 🥳
+
+#### Retrieval Tool Example
+
+You can run an [end-to-end assistant example which uses the built-in `retrieval` tool](./e2e/retrieval.ts), using the official [openai](https://github.com/openai/openai-node) client for Node.js against the default OpenAI API hosted at `https://api.openai.com/v1`.
+
+```bash
+npx tsx e2e/retrieval.ts
+```
+
+To run the same test suite against your local API, you can run:
+
+```bash
+OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e/retrieval.ts
+```
+
+The output will likely differ slightly due to differences in OpenAI's built-in retrieval implementation and [our default, naive retrieval implementation](./src/lib/retrieval.ts).
+
+Note that the [current `retrieval` implementation](https://github.com/transitive-bullshit/OpenOpenAI/blob/main/src/lib/retrieval.ts) only support text files like `text/plain` and markdown, as no preprocessing or conversions are done at the moment. We also use a very naive retrieval method at the moment which always returns the full file contents as opposed to pre-processing them and only returning the most semantically relevant chunks. See [this issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/2) for more info.
 
 ### Server routes
 
@@ -180,13 +204,20 @@ You can view the server's auto-generated openapi spec by running the server and 
 
 ## TODO
 
-- prefix ids (see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719))
+**Status**: All API routes have been tested side-by-side with the official OpenAI API and are working as expected. The only missing features at the moment are support for the built-in `code_interpreter` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/3)) and support for non-text files with the built-in `retrieval` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/2)). All other functionality should be fully supported and wire-compatible with the official API.
+
+TODO:
+
+- hosted demo (bring your own OpenAI API key?)
+- prefix ids
+  - openai uses prefix IDs for its resources, which would be great, except it's a pain to get working with Prisma
+  - see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719) for more details
 - get hosted redis working
-- hosted demo
 - handle locking thread and messages
-- built-in retrieval tool
-- built-in interpreter tool
-- handle context overflows
+  - not sure how this works exactly, but according to the [OpenAI Assistants Guide](https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps), threads are locked while runs are being processed
+- built-in `code_interpreter` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/3))
+- support non-text files w/ built-in `retrieval` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/2))
+- handle context overflows (truncation for now)
 
 ## License
 
