@@ -80,6 +80,7 @@ async function main() {
 
   try {
     assistant = await openai.beta.assistants.create({
+      name: `test ${testId}`,
       model: 'gpt-4-1106-preview',
       instructions: 'You are a helpful assistant.',
       metadata,

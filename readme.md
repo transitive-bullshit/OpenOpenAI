@@ -22,9 +22,49 @@
 
 **This project is a self-hosted version of OpenAI's new stateful Assistants API.** 💪
 
-All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so you can switch between the official API and your custom API simply by changing the `baseUrl`. 🤯
+All [API route definitions](./src/generated/oai-routes.ts) and [types](./src/generated/oai.ts) are **100% auto-generated** from OpenAI's official OpenAPI spec, so all it takes to switch between the official API and your custom API is changing the `baseUrl`. 🤯
 
 This means that all API parameters, responses, and types are wire-compatible with the official OpenAI API, and the fact that they're auto-generated means that it will be relatively easy to keep them in sync over time.
+
+Here's an example using the official Node.js `openai` package:
+
+```ts
+import OpenAI from 'openai'
+
+// The only difference is the `baseURL` 🔥
+const openai = new OpenAI({
+  ap
+  baseURL: 'http//:localhost:3000'
+})
+
+// You can use the sdk as normal now for files and all beta assistant resources
+const assistant = await openai.beta.assistants.create({
+  model: 'gpt-4-1106-preview',
+  instructions: 'You are a helpful assistant.'
+})
+```
+
+<details>
+<summary>Python example</summary>
+
+Here's an example using the official Python `openai` package:
+
+```py
+from openai import OpenAI
+
+# The only difference is the `base_url`
+client = OpenAI(
+    base_url: "http//:localhost:3000"
+)
+
+# You can use the sdk as normal now for files and all beta assistant resources
+assistant = client.beta.assistants.create(
+    model="gpt-4-1106-preview",
+    description="You are a helpful assistant."
+)
+```
+
+</details>
 
 This unlocks all sorts of useful possibilities... including:
 
