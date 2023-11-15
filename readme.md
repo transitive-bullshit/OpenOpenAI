@@ -36,12 +36,17 @@ const openai = new OpenAI({
   baseURL: 'http//:localhost:3000'
 })
 
-// Now you can use the sdk as normal for files and all beta assistant resources
+// Now you can use the sdk normally for files and all beta assistant resources.
 // (other endpoints are not currently supported)
+
 const assistant = await openai.beta.assistants.create({
   model: 'gpt-4-1106-preview',
   instructions: 'You are a helpful assistant.'
 })
+
+// You can even switch back and forth between the official and custom APIs to
+// test things out and have full control over how OpenAI's Assistants API works
+// under the hood!
 ```
 
 <details>
@@ -56,8 +61,9 @@ client = OpenAI(
     base_url: "http//:localhost:3000"
 )
 
-# Now you can use the sdk as normal for files and all beta assistant resources
+# Now you can use the sdk normally for files and all beta assistant resources.
 # (other endpoints are not currently supported)
+# You can even switch back and forth between the official and custom APIs!
 assistant = client.beta.assistants.create(
     model="gpt-4-1106-preview",
     description="You are a helpful assistant."
