@@ -104,6 +104,7 @@ I could even imagine a future Assistant store which is fully compatible with Ope
   - Any S3-compatible storage provider is supported, such as [Cloudflare R2](https://developers.cloudflare.com/r2/)
 - [Hono](https://hono.dev) - Serves the REST API via [@hono/zod-openapi](https://github.com/honojs/middleware/tree/main/packages/zod-openapi)
   - We're using the [Node.js](https://hono.dev/getting-started/nodejs) adaptor by default, but Hono supports many environments including CF workers, Vercel, Netlify, Deno, Bun, Lambda, etc.
+- [Dexter](https://github.com/dexaai/dexter) - Production RAG by [Dexa](https://dexa.ai)
 - [TypeScript](https://www.typescriptlang.org) 💕
 
 ## Development
