@@ -277,14 +277,13 @@ You can view the server's auto-generated openapi spec by running the server and 
 **TODO**:
 
 - hosted demo (bring your own OpenAI API key?)
-- prefix ids
-  - openai uses prefix IDs for its resources, which would be great, except it's a pain to get working with Prisma
-  - see [prisma 3391](https://github.com/prisma/prisma/issues/3391) and [prisma 6719](https://github.com/prisma/prisma/issues/6719) for more details
 - get hosted redis working
 - handle locking thread and messages
   - not sure how this works exactly, but according to the [OpenAI Assistants Guide](https://platform.openai.com/docs/assistants/how-it-works/runs-and-run-steps), threads are locked while runs are being processed
 - built-in `code_interpreter` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/3))
 - support non-text files w/ built-in `retrieval` tool ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/2))
+- openai uses prefix IDs for its resources, which would be great, except it's a pain to get working with Prisma ([issue](https://github.com/transitive-bullshit/OpenOpenAI/issues/7))
+- figure out why localhost resolution wasn't working for [#6](https://github.com/transitive-bullshit/OpenOpenAI/pull/6)
 - handle context overflows (truncation for now)
 
 ## License
