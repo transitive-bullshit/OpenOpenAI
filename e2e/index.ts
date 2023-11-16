@@ -23,7 +23,7 @@ import type { Run } from '~/lib/db'
  *
  * To run it against your custom, local API:
  * ```bash
- * OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e
+ * OPENAI_API_BASE_URL='http://127.0.0.1:3000' npx tsx e2e
  * ```
  */
 async function main() {

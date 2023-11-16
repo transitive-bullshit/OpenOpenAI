@@ -203,7 +203,7 @@ npx tsx e2e
 To run the same test suite against your local API, you can run:
 
 ```bash
-OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e
+OPENAI_API_BASE_URL='http://127.0.0.1:3000' npx tsx e2e
 ```
 
 It's pretty cool to see both test suites running the exact same Assistants code using the official OpenAI Node.js client – without any noticeable differences between the two versions. Huzzah! 🥳
@@ -221,7 +221,7 @@ npx tsx e2e/retrieval.ts
 To run the same test suite against your local API, you can run:
 
 ```bash
-OPENAI_API_BASE_URL='http://localhost:3000' npx tsx e2e/retrieval.ts
+OPENAI_API_BASE_URL='http://127.0.0.1:3000' npx tsx e2e/retrieval.ts
 ```
 
 The output will likely differ slightly due to differences in OpenAI's built-in retrieval implementation and [our default, naive retrieval implementation](./src/lib/retrieval.ts).
@@ -268,7 +268,7 @@ GET       /threads/:thread_id/runs/:run_id/steps/:step_id
 GET       /openapi
 ```
 
-You can view the server's auto-generated openapi spec by running the server and then visiting `http://localhost:3000/openapi`
+You can view the server's auto-generated openapi spec by running the server and then visiting `http://127.0.0.1:3000/openapi`
 
 ## TODO
 
