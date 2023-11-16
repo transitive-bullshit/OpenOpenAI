@@ -1,6 +1,8 @@
-import { cn } from 'lib/utils'
 import type { Metadata } from 'next'
 import { Inter as FontSans } from 'next/font/google'
+import { Toaster } from 'sonner'
+
+import { cn } from '@/lib/utils'
 
 import './globals.css'
 
@@ -27,6 +29,8 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
+        <Toaster />
+
         {children}
       </body>
     </html>

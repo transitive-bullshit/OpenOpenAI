@@ -1,3 +1,4 @@
+import tailwindLineClampPlugin from '@tailwindcss/line-clamp'
 import type { Config } from 'tailwindcss'
 import tailwindAnimatePlugin from 'tailwindcss-animate'
 import { fontFamily } from 'tailwindcss/defaultTheme'
@@ -83,7 +84,7 @@ const config: Config = {
       }
     }
   },
-  plugins: [tailwindAnimatePlugin]
+  plugins: [tailwindAnimatePlugin, tailwindLineClampPlugin]
 }
 
 export default config
