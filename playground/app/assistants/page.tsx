@@ -3,11 +3,11 @@
 import { listAssistants } from '@/lib/openai'
 import type { Assistant } from '@/lib/types'
 
-import { DataTable } from './assistants-table'
 import { columns } from './columns'
+import { DataTable } from './data-table'
 
 async function getAssistants(): Promise<Assistant[]> {
-  const res = await listAssistants()
+  const res = await listAssistants({ limit: 100 })
   return res.data
 }
 
