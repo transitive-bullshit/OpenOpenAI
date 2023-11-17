@@ -1,5 +1,7 @@
 'use server'
 
+import 'server-only'
+
 // TODO: will using the web shim work with vercel `fetch` caching?
 import 'openai/shims/web'
 

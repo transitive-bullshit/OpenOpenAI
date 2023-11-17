@@ -65,7 +65,9 @@ function Cell({ row }: { row: Row<Assistant> }) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align='end'>
-        <DropdownMenuItem onClick={() => router.push(`/assistants/${row.id}`)}>
+        <DropdownMenuItem
+          onClick={() => router.push(`/assistants/${row.original.id}`)}
+        >
           <Pencil2Icon className='mr-2 h-4 w-4' /> Edit
         </DropdownMenuItem>
 
@@ -75,7 +77,7 @@ function Cell({ row }: { row: Row<Assistant> }) {
 
         <DropdownMenuItem
           className='text-green-600'
-          onClick={() => router.push(`/assistants/${row.id}`)}
+          onClick={() => router.push(`/assistants/${row.original.id}`)}
         >
           <PlayIcon className='mr-2 h-4 w-4' />
           Test in Playground

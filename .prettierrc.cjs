@@ -11,6 +11,7 @@ module.exports = {
   trailingComma: 'none',
   importOrder: [
     '^node:.*',
+    'server-only',
     'openai/shims/web',
     '<THIRD_PARTY_MODULES>',
     '^([~@]/(.*)$)',

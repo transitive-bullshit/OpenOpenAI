@@ -7,6 +7,7 @@ import {
   getPaginationRowModel,
   useReactTable
 } from '@tanstack/react-table'
+import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -21,11 +22,14 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  // onClickRow?: (row: TData) => void | Promise<void>
+  rowLink?: (row: TData) => string
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  data
+  data,
+  rowLink
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -59,21 +63,39 @@ export function DataTable<TData, TValue>({
 
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                console.log('rowLink', rowLink)
+                const link = rowLink?.(row.original)
+                console.log(link)
+
+                const cols = (
+                  <>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </>
+                )
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    // onClick={() => onClickRow?.(row.original)}
+                    className={
+                      link
+                        ? 'hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer'
+                        : ''
+                    }
+                  >
+                    {link ? <Link href={link}>{cols}</Link> : cols}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell

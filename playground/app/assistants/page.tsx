@@ -17,7 +17,12 @@ export default async function AssistantsPage() {
   return (
     <main className='flex min-h-screen flex-col items-center justify-between p-24'>
       <div className='container mx-auto py-10'>
-        <DataTable columns={columns} data={data} />
+        <DataTable
+          columns={columns}
+          data={data}
+          rowLink={(assistant: Assistant) => `/assistants/${assistant.id}`}
+          // onClickRow={(assistant) => router.push(`/assistants/${assistant.id}`)}
+        />
       </div>
     </main>
   )
