@@ -20,9 +20,9 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { deleteAssistant } from '@/lib/openai'
-import type { Assistant } from '@/lib/types'
+import type { AppAssistant } from '@/lib/types'
 
-export const columns: ColumnDef<Assistant>[] = [
+export const columns: ColumnDef<AppAssistant>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
@@ -51,7 +51,7 @@ export const columns: ColumnDef<Assistant>[] = [
   }
 ]
 
-function Cell({ row }: { row: Row<Assistant> }) {
+function Cell({ row }: { row: Row<AppAssistant> }) {
   const router = useRouter()
 
   return (
@@ -65,9 +65,7 @@ function Cell({ row }: { row: Row<Assistant> }) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align='end'>
-        <DropdownMenuItem
-          onClick={() => router.push(`/assistants/${row.original.id}`)}
-        >
+        <DropdownMenuItem disabled>
           <Pencil2Icon className='mr-2 h-4 w-4' /> Edit
         </DropdownMenuItem>
 
@@ -77,7 +75,7 @@ function Cell({ row }: { row: Row<Assistant> }) {
 
         <DropdownMenuItem
           className='text-green-600'
-          onClick={() => router.push(`/assistants/${row.original.id}`)}
+          onClick={() => router.push(row.original.href)}
         >
           <PlayIcon className='mr-2 h-4 w-4' />
           Test in Playground

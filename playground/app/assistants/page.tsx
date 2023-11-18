@@ -1,14 +1,17 @@
 'use server'
 
 import { listAssistants } from '@/lib/openai'
-import type { Assistant } from '@/lib/types'
+import type { AppAssistant } from '@/lib/types'
 
 import { columns } from './columns'
 import { DataTable } from './data-table'
 
-async function getAssistants(): Promise<Assistant[]> {
+async function getAssistants(): Promise<AppAssistant[]> {
   const res = await listAssistants({ limit: 100 })
-  return res.data
+  return res.data.map<AppAssistant>((assistant) => ({
+    ...assistant,
+    href: `/assistants/${assistant.id}`
+  }))
 }
 
 export default async function AssistantsPage() {
@@ -20,7 +23,7 @@ export default async function AssistantsPage() {
         <DataTable
           columns={columns}
           data={data}
-          rowLink={(assistant: Assistant) => `/assistants/${assistant.id}`}
+          rowLinkKey='href'
           // onClickRow={(assistant) => router.push(`/assistants/${assistant.id}`)}
         />
       </div>

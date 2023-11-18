@@ -8,6 +8,7 @@ import {
   useReactTable
 } from '@tanstack/react-table'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -22,15 +23,15 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  // onClickRow?: (row: TData) => void | Promise<void>
-  rowLink?: (row: TData) => string
+  rowLinkKey?: keyof TData & string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  rowLink
+  rowLinkKey
 }: DataTableProps<TData, TValue>) {
+  const router = useRouter()
   const table = useReactTable({
     data,
     columns,
@@ -64,12 +65,22 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                console.log('rowLink', rowLink)
-                const link = rowLink?.(row.original)
-                console.log(link)
+                const href = rowLinkKey
+                  ? (row.original[rowLinkKey] as string)
+                  : null
 
-                const cols = (
-                  <>
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    // onClick={() => onClickRow?.(row.original)}
+                    className={
+                      href
+                        ? 'hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer'
+                        : ''
+                    }
+                    onClick={href ? () => router.push(href) : undefined}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(
@@ -78,21 +89,6 @@ export function DataTable<TData, TValue>({
                         )}
                       </TableCell>
                     ))}
-                  </>
-                )
-
-                return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    // onClick={() => onClickRow?.(row.original)}
-                    className={
-                      link
-                        ? 'hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer'
-                        : ''
-                    }
-                  >
-                    {link ? <Link href={link}>{cols}</Link> : cols}
                   </TableRow>
                 )
               })
