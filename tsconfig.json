@@ -1,6 +1,6 @@
 {
   "include": ["src", "bin", "e2e"],
-  "exclude": ["node_modules", "dist", "openai-openapi"],
+  "exclude": ["node_modules", "dist", "openai-openapi", "playground"],
   "compilerOptions": {
     "target": "es2020",
     "lib": ["ESNext", "DOM"],
