@@ -38,7 +38,7 @@ import OpenAI from 'openai'
 
 // The only difference is the `baseURL` pointing to your custom API server 🔥
 const openai = new OpenAI({
-  baseURL: 'http//:localhost:3000'
+  baseURL: 'http://localhost:3000'
 })
 
 // Since the custom API is spec-compliant with OpenAI, you can use the sdk normally 💯
@@ -57,7 +57,7 @@ Here's the same example using the official Python `openai` package:
 from openai import OpenAI
 
 client = OpenAI(
-    base_url: "http//:localhost:3000"
+    base_url: "http://localhost:3000"
 )
 
 # Now you can use the sdk normally!
