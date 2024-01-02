@@ -9,7 +9,14 @@ module.exports = {
   bracketSameLine: false,
   arrowParens: 'always',
   trailingComma: 'none',
-  importOrder: ['^node:.*', '<THIRD_PARTY_MODULES>', '^(~/(.*)$)', '^[./]'],
+  importOrder: [
+    '^node:.*',
+    'server-only',
+    'openai/shims/web',
+    '<THIRD_PARTY_MODULES>',
+    '^([~@]/(.*)$)',
+    '^[./]'
+  ],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
   importOrderGroupNamespaceSpecifiers: true
