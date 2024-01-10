@@ -1,0 +1,111 @@
+applications:
+  openopenai:
+    source:
+      root: "/"
+    type: "nodejs:20"
+    relationships:
+      postgresql: "postgresql:postgresql"
+      redis: "redis:redis"
+    web:
+      commands:
+        start: "npx tsx src/server"
+      locations:
+        "/":
+          passthru: true
+    workers:
+      worker:
+        commands:
+          start: "npx tsx src/runner"
+    build:
+      flavor: none
+    hooks:
+      build: |
+        set -eux
+        npm install -g pnpm
+        pnpm install
+        pnpm generate
+        pnpm build
+      # the following is only needed once.
+      deploy: |
+        set -eux
+        # pnpm prisma migrate deploy --skip-generate prisma/schema.prisma
+        # pnpm prisma db push --skip-generate prisma/schema.prisma 
+  minio-console:
+    type: golang:1.21
+    source:
+      root: minio
+    hooks:
+      build: |
+        go install github.com/minio/console/cmd/console@latest
+    web:
+      commands:
+        start: ./go/bin/console server --port=$PORT
+    mounts:
+      '/.console': 
+        source: storage
+        source_path: .console
+  minio:
+    type: golang:1.21
+    variables:
+      env:
+        MINIO_BROWSER: off
+    source:
+      root: minio
+    hooks:
+      build: |
+        set -e
+        wget https://dl.minio.io/server/minio/release/linux-amd64/minio
+        chmod +x minio
+        wget https://dl.min.io/client/mc/release/linux-amd64/mc
+        chmod +x mc
+      post_deploy: |
+        if ./mc admin user ls minio ; then
+        echo "Minio Already Setup"
+        else 
+        set -e
+        ./mc config host add minio $MINIO_URL $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+        ./mc admin user add minio/ $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY
+        ./mc admin user enable minio/ $S3_ACCESS_KEY_ID
+        ./mc mb minio/$S3_BUCKET
+        ./mc admin policy attach minio/ readwrite --user $S3_ACCESS_KEY_ID
+        fi
+    web:
+      upstream:
+        socket_family: tcp
+        protocol: http
+      commands:
+        start: |
+          ./minio server $HOME/data --address ":$PORT" --config-dir $HOME/config --certs-dir $HOME/config/certs
+      locations:
+        /:
+          allow: false
+          passthru: true
+    mounts:
+      '/.mc': 
+        source: storage
+        source_path: .mc
+      'data':
+        source: storage
+        source_path: data
+      'config':
+        source: storage
+        source_path: config
+services:
+  postgresql:
+    type: postgresql:15
+  redis:
+    type: redis:7.0
+routes:
+  "https://{default}/":
+    type: upstream
+    upstream: "openopenai:http"
+  "https://minio.{default}/":
+    id: minio
+    type: upstream
+    upstream: "minio:http"
+  "https://minio-console.{default}/":
+    type: upstream
+    upstream: "minio-console:http"
+  "https://www.{default}":
+    type: redirect
+    to: "https://{default}/"
