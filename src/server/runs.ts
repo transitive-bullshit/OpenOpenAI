@@ -89,7 +89,9 @@ app.openapi(routes.createRun, async (c) => {
       // @ts-ignore tools may be overridden by params
       tools: assistant.tools,
       file_ids: assistant.file_ids,
-      ...utils.convertOAIToPrisma(body),
+      assistant_id: assistant.id,
+      instructions: assistant.instructions || '',
+      model: assistant.model,
       thread_id,
       status: 'queued' as const,
       expires_at: new Date(now + config.runs.maxRunTime)
