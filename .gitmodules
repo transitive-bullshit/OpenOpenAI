@@ -1,3 +1,3 @@
 [submodule "openai-openapi"]
 	path = openai-openapi
-	url = git@github.com:openai/openai-openapi.git
+	url = https://github.com/openai/openai-openapi.git
