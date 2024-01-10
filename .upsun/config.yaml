@@ -1,196 +1,111 @@
-# Complete list of all available properties: https://docs.upsun.com/create-apps/app-reference.html
 applications:
   openopenai:
-    # Application source code directory
     source:
       root: "/"
-
-    # The runtime the application uses.
-    # Complete list of available runtimes: https://docs.upsun.com/create-apps/app-reference.html#types
     type: "nodejs:20"
-
-    # How many resources to devote to the app. Defaults to AUTO in production environments.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#sizes
-    # size:
-
-    # The relationships of the application with services or other applications.
-    # The left-hand side is the name of the relationship as it will be exposed
-    # to the application in the PLATFORM_RELATIONSHIPS variable. The right-hand
-    # side is in the form `<service name>:<endpoint name>`.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#relationships
     relationships:
       postgresql: "postgresql:postgresql"
       redis: "redis:redis"
-      
-
-    # Mounts define directories that are writable after the build is complete.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#mounts
-    # mounts:
-    #   "/var/uploads": # Represents the path in the app.
-    #     source: "storage" # "storage" sources are unique to the app, but shared among instances of the app. "service" sources can be shared among apps.
-    #     source_path: "var/uploads" # The subdirectory within the mounted disk (the source) where the mount should point.
-
-    # The web key configures the web server running in front of your app.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#web
     web:
-      # Commands are run once after deployment to start the application process.
-      # More information: https://docs.upsun.com/create-apps/app-reference.html#web-commands
       commands:
-        # The command to launch your app. If it terminates, it’s restarted immediately.
-        # You can use the $PORT or the $SOCKET environment variable depending on the socket family of your upstream
-        start: "npx tsx dist/server"
-      # You can listen to a UNIX socket (unix) or a TCP port (tcp, default).
-      # Whether your app should speak to the webserver via TCP or Unix socket. Defaults to tcp
-      # More information: https://docs.upsun.com/create-apps/app-reference.html#where-to-listen
-      upstream:
-        # Whether your app should speak to the webserver via TCP or Unix socket. Defaults to tcp
-        # More information: https://docs.upsun.com/create-apps/app-reference.html#where-to-listen
-        socket_family: tcp
-      # Each key in locations is a path on your site with a leading /.
-      # More information: https://docs.upsun.com/create-apps/app-reference.html#locations
+        start: "npx tsx src/server"
       locations:
         "/":
           passthru: true
-    # Alternate copies of the application to run as background processes.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#workers
     workers:
       worker:
-        start: "npx tsx dist/runner"
-
-    # The timezone for crons to run. Format: a TZ database name. Defaults to UTC, which is the timezone used for all logs
-    # no matter the value here. More information: https://docs.upsun.com/create-apps/timezone.html
-    # timezone: <time-zone>
-
-    # Access control for roles accessing app environments.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#access
-    # access:
-
-    # Variables to control the environment. More information: https://docs.upsun.com/create-apps/app-reference.html#variables
-    # variables:
-    #   env:
-    #     # Add environment variables here that are static.
-    #     NODE_ENV: development
-
-    # Outbound firewall rules for the application. More information: https://docs.upsun.com/create-apps/app-reference.html#firewall
-    # firewall:
-
-    # Specifies a default set of build tasks to run. Flavors are language-specific.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#build
+        commands:
+          start: "npx tsx src/runner"
     build:
       flavor: none
-
-    # Installs global dependencies as part of the build process. They’re independent of your app’s dependencies and
-    # are available in the PATH during the build process and in the runtime environment. They’re installed before
-    # the build hook runs using a package manager for the language.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#dependencies
-    # dependencies:
-    #   nodejs: # Specify one NPM package per line.
-    #     pm2: '^4.5.0'
-
-    # Hooks allow you to customize your code/environment as the project moves through the build and deploy stages
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#hooks
     hooks:
-      # The build hook is run after any build flavor.
-      # More information: https://docs.upsun.com/create-apps/hooks/hooks-comparison.html#build-hook
       build: |
         set -eux
-        corepack enable
-        corepack prepare pnpm@latest --activate
+        npm install -g pnpm
         pnpm install
         pnpm generate
         pnpm build
-      # The deploy hook is run after the app container has been started, but before it has started accepting requests.
-      # More information: https://docs.upsun.com/create-apps/hooks/hooks-comparison.html#deploy-hook
+      # the following is only needed once.
       deploy: |
         set -eux
-        # echo 'Put your deploy command here'
-        
-
-      # The post_deploy hook is run after the app container has been started and after it has started accepting requests.
-      # More information: https://docs.upsun.com/create-apps/hooks/hooks-comparison.html#deploy-hook
-      # post_deploy: |
-
-    # Scheduled tasks for the app.
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#crons
-    # crons:
-
-    # Customizations to your PHP or Lisp runtime. More information: https://docs.upsun.com/create-apps/app-reference.html#runtime
-    # runtime:
-
-    # More information: https://docs.upsun.com/create-apps/app-reference.html#additional-hosts
-    # additional_hosts:
-  minio:
+        # pnpm prisma migrate deploy --skip-generate prisma/schema.prisma
+        # pnpm prisma db push --skip-generate prisma/schema.prisma 
+  minio-console:
     type: golang:1.21
-
     source:
       root: minio
-
+    hooks:
+      build: |
+        go install github.com/minio/console/cmd/console@latest
+    web:
+      commands:
+        start: ./go/bin/console server --port=$PORT
+    mounts:
+      '/.console': 
+        source: storage
+        source_path: .console
+  minio:
+    type: golang:1.21
+    variables:
+      env:
+        MINIO_BROWSER: off
+    source:
+      root: minio
     hooks:
       build: |
         set -e
         wget https://dl.minio.io/server/minio/release/linux-amd64/minio
         chmod +x minio
-        curl https://dl.min.io/client/mc/release/linux-amd64/mc \
-          --create-dirs \
-          -o $HOME/minio-binaries/mc
-        chmod +x $HOME/minio-binaries/mc
-        export PATH=$PATH:$HOME/minio-binaries
+        wget https://dl.min.io/client/mc/release/linux-amd64/mc
+        chmod +x mc
       post_deploy: |
+        if ./mc admin user ls minio ; then
+        echo "Minio Already Setup"
+        else 
         set -e
-        minio-binaries/mc config host add minio $MINIO_URL $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-        minio-binaries/mc admin user add minio/ $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY
-        minio-binaries/mc admin user enable minio/ $S3_ACCESS_KEY_ID
-        minio-binaries/mc mb minio/$S3_BUCKET
-        minio-binaries/mc admin policy attach minio/ readwrite --user $S3_ACCESS_KEY_ID
+        ./mc config host add minio $MINIO_URL $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+        ./mc admin user add minio/ $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY
+        ./mc admin user enable minio/ $S3_ACCESS_KEY_ID
+        ./mc mb minio/$S3_BUCKET
+        ./mc admin policy attach minio/ readwrite --user $S3_ACCESS_KEY_ID
+        fi
     web:
       upstream:
         socket_family: tcp
         protocol: http
-
       commands:
         start: |
-          ./minio server /app/minio_data --address ":$PORT" --console-address ":9000" --config-dir /app/minio_config --certs-dir /app/minio_config/certs
-
+          ./minio server $HOME/data --address ":$PORT" --config-dir $HOME/config --certs-dir $HOME/config/certs
       locations:
         /:
           allow: false
           passthru: true
-
-    disk: 1024
     mounts:
-      '/.mc': 'shared:files/.mc'
-      'minio_data':
+      '/.mc': 
         source: storage
-        source_path: minio_data_dir
-      'minio_config':
+        source_path: .mc
+      'data':
         source: storage
-        source_path: minio_config_dir
-# The services of the project.
-#
-# Each service listed will be deployed
-# to power your Upsun project.
-# More information: https://docs.upsun.com/add-services.html
-# Full list of available services: https://docs.upsun.com/add-services.html#available-services
+        source_path: data
+      'config':
+        source: storage
+        source_path: config
 services:
   postgresql:
-    type: postgresql:15 # All available versions are: 15, 14, 13, 12, 11
-
+    type: postgresql:15
   redis:
-    type: redis:7.0 # All available versions are: 7.0, 6.2
-
-  
-
-# The routes of the project.
-#
-# Each route describes how an incoming URL is going
-# to be processed by Upsun.
-# More information: https://docs.upsun.com/define-routes.html
+    type: redis:7.0
 routes:
   "https://{default}/":
     type: upstream
     upstream: "openopenai:http"
-  # A basic redirect definition
-  # More information: https://docs.upsun.com/define-routes.html#basic-redirect-definition
+  "https://minio.{default}/":
+    id: minio
+    type: upstream
+    upstream: "minio:http"
+  "https://minio-console.{default}/":
+    type: upstream
+    upstream: "minio-console:http"
   "https://www.{default}":
     type: redirect
     to: "https://{default}/"

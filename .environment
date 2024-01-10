@@ -5,23 +5,16 @@ export DB_PATH="$POSTGRESQL_PATH"
 export DB_USERNAME="$POSTGRESQL_USERNAME"
 export DB_PASSWORD="$POSTGRESQL_PASSWORD"
 export DB_SCHEME="$POSTGRESQL_SCHEME"
-export DATABASE_URL="${DB_SCHEME}://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_PATH}"
+export DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_PATH}"
 
-# Set Cache environment variables
-export CACHE_HOST="$REDIS_HOST"
-export CACHE_PORT="$REDIS_PORT"
-export CACHE_SCHEME="$REDIS_SCHEME"
-export CACHE_URL="${CACHE_SCHEME}://${CACHE_HOST}:${CACHE_PORT}"
-
-# Set Redis environment variables
-export REDIS_URL="$CACHE_URL"
+export REDIS_USERNAME=""
 
 # Set S3/Minio environment variables
 export MINIO_URL=$(echo $PLATFORM_ROUTES | base64 --decode | jq -r 'to_entries[] | select (.value.id == "minio") | .key')
+export AWS_ENDPOINT=$MINIO_URL
+export S3_ENDPOINT=$AWS_ENDPOINT
 export S3_BUCKET=files
 export AWS_DEFAULT_REGION=us-east-1
-export AWS_ENDPOINT=$MINIO_URL:$PORT
-export S3_ENDPOINT=$AWS_ENDPOINT
 export MINIO_ROOT_USER=root
 # Should be set on API
 #S3_ACCESS_KEY_ID
